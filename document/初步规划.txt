@@ -1,0 +1,14 @@
+OpenPulse AI 初步规划
+
+当前目标：
+先完成 MVP v0.1 的项目边界、模块职责和 Java/C++ 通信协议，再开始搭建代码骨架。
+
+建议阅读顺序：
+1. docs/00-glossary.md
+2. docs/01-mvp-v0.1.md
+3. docs/02-analyzer-json-protocol.md
+4. docs/03-week-1-checklist.md
+
+第一步重点：
+不要一开始追求功能多，先跑通：
+输入 GitHub 仓库 -> 下载代码 -> C++ 扫描 -> Java 读取 JSON -> 健康评分 -> AI 建议 -> 前端展示。

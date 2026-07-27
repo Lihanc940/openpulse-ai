@@ -1,0 +1,47 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# Java and Maven
+**/target/
+*.class
+
+# C++ and CMake
+**/build/
+**/cmake-build-*/
+**/CMakeFiles/
+**/CMakeCache.txt
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node.js
+**/node_modules/
+**/dist/
+
+# Runtime data
+data/
+tmp/
+logs/
+*.log
+
+# Local development tools
+.tools/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
