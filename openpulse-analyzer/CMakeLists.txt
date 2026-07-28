@@ -6,5 +6,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
 
-add_executable(openpulse-analyzer src/main.cpp)
+add_executable(openpulse-analyzer src/main.cpp "include/FileScanner.h" "src/FileScanner.cpp")
 target_include_directories(openpulse-analyzer PRIVATE include)
