@@ -37,3 +37,5 @@ Openpulse AI/
 ## 工程约定
 
 开发规则见 `CONTRIBUTING.md`。任何密钥和本地配置都不能提交；功能通过短期分支和 Pull Request 合并到 `main`。
+
+- C++ 开发环境已确认：VS 2022 + CMake 4.4.0（@SssongZN 验证，2026-07-28）
