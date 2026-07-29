@@ -4,7 +4,19 @@ project(openpulse-analyzer VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(include)
+include(FetchContent)
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
-add_executable(openpulse-analyzer src/main.cpp "include/FileScanner.h" "src/FileScanner.cpp")
+add_executable(openpulse-analyzer
+  src/main.cpp
+  src/Analyzer.cpp
+  src/FileScanner.cpp
+)
 target_include_directories(openpulse-analyzer PRIVATE include)
+target_compile_options(openpulse-analyzer PRIVATE /utf-8)
+target_link_libraries(openpulse-analyzer PRIVATE nlohmann_json::nlohmann_json)
