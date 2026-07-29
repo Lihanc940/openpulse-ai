@@ -1,0 +1,87 @@
+{
+  "dependencies": {
+    "edges": [],
+    "nodes": []
+  },
+  "generatedAt": "2026-07-29T11:05:16+08:00",
+  "languages": [
+    {
+      "files": 52,
+      "lines": 12000,
+      "name": "Java"
+    },
+    {
+      "files": 18,
+      "lines": 5400,
+      "name": "C++"
+    },
+    {
+      "files": 24,
+      "lines": 6441,
+      "name": "Python"
+    }
+  ],
+  "protocolVersion": "1.0",
+  "quality": {
+    "complexityScore": 72,
+    "documentationScore": 65,
+    "maintainabilityScore": 81,
+    "testScore": 58
+  },
+  "repository": {
+    "name": ".",
+    "path": "."
+  },
+  "risks": [
+    {
+      "evidence": {
+        "expectedFile": "CHANGELOG.md"
+      },
+      "file": "",
+      "level": "MEDIUM",
+      "line": 0,
+      "message": "项目缺少 CHANGELOG 文件，建议记录版本变更历史。",
+      "ruleId": "MISSING_CHANGELOG",
+      "type": "PROJECT_STRUCTURE"
+    },
+    {
+      "evidence": {
+        "functionLines": 126,
+        "functionName": "registerUser",
+        "threshold": 80
+      },
+      "file": "src/UserService.java",
+      "level": "HIGH",
+      "line": 84,
+      "message": "函数长度为 126 行，建议拆分职责。",
+      "ruleId": "LONG_FUNCTION",
+      "type": "CODE_SMELL"
+    }
+  ],
+  "status": "SUCCESS",
+  "structure": {
+    "buildFiles": [
+      "pom.xml",
+      "CMakeLists.txt"
+    ],
+    "hasChangelog": false,
+    "hasCi": true,
+    "hasContributing": false,
+    "hasDockerfile": false,
+    "hasLicense": true,
+    "hasReadme": true,
+    "hasTests": true
+  },
+  "summary": {
+    "blankLines": 2921,
+    "codeLines": 17640,
+    "commentLines": 3280,
+    "configFiles": 8,
+    "documentFiles": 3,
+    "sourceFiles": 94,
+    "testFiles": 13,
+    "totalFiles": 186,
+    "totalLines": 23841
+  },
+  "taskId": "task_1785294316475"
+}

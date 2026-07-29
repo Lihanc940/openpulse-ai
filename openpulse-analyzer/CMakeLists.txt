@@ -15,8 +15,9 @@ FetchContent_MakeAvailable(nlohmann_json)
 add_executable(openpulse-analyzer
   src/main.cpp
   src/Analyzer.cpp
-  src/FileScanner.cpp
 )
 target_include_directories(openpulse-analyzer PRIVATE include)
-target_compile_options(openpulse-analyzer PRIVATE /utf-8)
+if(MSVC)
+  target_compile_options(openpulse-analyzer PRIVATE /utf-8)
+endif()
 target_link_libraries(openpulse-analyzer PRIVATE nlohmann_json::nlohmann_json)
