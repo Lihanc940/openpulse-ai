@@ -37,3 +37,12 @@ Openpulse AI/
 ## 工程约定
 
 开发规则见 `CONTRIBUTING.md`。任何密钥和本地配置都不能提交；功能通过短期分支和 Pull Request 合并到 `main`。
+
+## 当前开发任务
+
+Java 负责人当前执行：
+
+- `docs/tasks/01-java-platform-bootstrap.md`
+- 分支：`feat/platform-bootstrap`
+
+任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。
