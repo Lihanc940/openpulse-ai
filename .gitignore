@@ -12,6 +12,7 @@
 
 # C++ and CMake
 **/build/
+**/out/
 **/cmake-build-*/
 **/CMakeFiles/
 **/CMakeCache.txt
@@ -35,6 +36,7 @@ logs/
 
 # IDEs
 .idea/
+.vs/
 .vscode/
 *.iml
 .classpath
