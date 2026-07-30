@@ -45,7 +45,7 @@ CliArgs parseArgs(int argc, char* argv[]) {
             }
         } else if (arg == "--help" || arg == "-h") {
             printUsage(std::cout, argv[0]);
-            return args;  // valid remains false
+            std::exit(0);
         } else {
             std::cerr << "Error: unknown argument: " << arg << "\n";
             printUsage(std::cerr, argv[0]);
@@ -78,10 +78,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Validate --path exists
+    // Validate --path exists and is a directory
     std::error_code ec;
     if (!std::filesystem::exists(args.repoPath, ec)) {
         std::cerr << "Error: path does not exist: " << args.repoPath.string() << "\n";
+        return 2;
+    }
+    if (!std::filesystem::is_directory(args.repoPath, ec)) {
+        std::cerr << "Error: path is not a directory: " << args.repoPath.string() << "\n";
         return 2;
     }
 
