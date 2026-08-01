@@ -66,6 +66,30 @@ std::string languageFromExt(const std::string& ext) {
     return it != LANG_MAP.end() ? it->second : "Other";
 }
 
+// ---- Comment style helpers ------------------------------------------------
+
+bool isSlashStarExt(const std::string& ext) {
+    // C-family extensions that support /* */ block comments
+    static const std::set<std::string> EXTS = {
+        ".c", ".cpp", ".cc", ".cxx", ".c++", ".h", ".hpp", ".hxx", ".hh",
+        ".java", ".kt", ".kts", ".scala",
+        ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+        ".go", ".rs", ".swift", ".cs", ".php", ".dart",
+        ".css", ".scss", ".less"
+    };
+    return EXTS.count(ext) > 0;
+}
+
+bool isHashExt(const std::string& ext) {
+    // Script / config languages that use # for comments
+    static const std::set<std::string> EXTS = {
+        ".py", ".pyx", ".rb", ".sh", ".bash", ".pl", ".pm",
+        ".r", ".lua", ".ps1", ".yaml", ".yml", ".toml",
+        ".cfg", ".ini", ".cmake", ".sql"
+    };
+    return EXTS.count(ext) > 0;
+}
+
 } // anonymous namespace
 
 // --- Public interface ---
@@ -112,9 +136,20 @@ bool Analyzer::isConfigFile(const std::string& ext) const {
 bool Analyzer::isTestFile(const std::filesystem::path& path) const {
     auto p = path.string();
     std::transform(p.begin(), p.end(), p.begin(), ::tolower);
-    // Test file heuristics: path contains "test" or filename starts/ends with "test"
-    return p.find("test") != std::string::npos ||
-           p.find("spec") != std::string::npos;
+    // Heuristic: filename or enclosing directory starts / ends with "test" or "spec"
+    for (auto it = path.begin(); it != path.end(); ++it) {
+        std::string seg = it->string();
+        std::transform(seg.begin(), seg.end(), seg.begin(), ::tolower);
+        if (seg == "test" || seg == "tests" || seg == "spec" || seg == "specs")
+            return true;
+    }
+    // Also check filestem (filename without extension) for "test" / "spec" as prefix or suffix
+    std::string stem = path.stem().string();
+    std::transform(stem.begin(), stem.end(), stem.begin(), ::tolower);
+    if (stem.starts_with("test") || stem.ends_with("test") ||
+        stem.starts_with("spec") || stem.ends_with("spec"))
+        return true;
+    return false;
 }
 
 std::string Analyzer::languageFromExtension(const std::string& ext) const {
@@ -128,7 +163,10 @@ FileStats Analyzer::scanDirectory(const std::filesystem::path& root) const {
     for (auto it = std::filesystem::recursive_directory_iterator(root, ec);
          it != std::filesystem::recursive_directory_iterator(); ) {
         if (ec) {
-            // Skip unreadable entries
+            // Skip unreadable entries, count one skipped entity
+            if (it.depth() > 0 && !ec.default_error_condition()) {
+                stats.skippedDirs++;
+            }
             ++it;
             ec.clear();
             continue;
@@ -136,6 +174,7 @@ FileStats Analyzer::scanDirectory(const std::filesystem::path& root) const {
 
         if (it->is_directory(ec) && shouldSkipDir(it->path())) {
             it.disable_recursion_pending();
+            stats.skippedDirs++;
             ++it;
             continue;
         }
@@ -156,46 +195,110 @@ FileStats Analyzer::scanDirectory(const std::filesystem::path& root) const {
                 stats.testFiles++;
             }
 
-            // Count lines
+            // Count lines with comment-style detection
             std::ifstream file(it->path().string());
             if (file.is_open()) {
                 std::string line;
+                bool inBlock = false;  // inside /* */ block comment
                 while (std::getline(file, line)) {
                     stats.totalLines++;
 
-                    // Trim whitespace
+                    // Trim leading whitespace
                     size_t start = line.find_first_not_of(" \t\r");
+
                     if (start == std::string::npos) {
                         stats.blankLines++;
-                    } else if (line[start] == '#') {
-                        stats.commentLines++;
-                    } else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c++" ||
-                               ext == ".c" || ext == ".h" || ext == ".hpp" || ext == ".hxx" ||
-                               ext == ".java" || ext == ".kt" || ext == ".swift" ||
-                               ext == ".cs" || ext == ".go" || ext == ".rs" ||
-                               ext == ".js" || ext == ".jsx" || ext == ".ts" || ext == ".tsx" ||
-                               ext == ".scala" || ext == ".dart" || ext == ".php") {
-                        if (line.substr(start, 2) == "//") {
-                            stats.commentLines++;
-                        } else {
-                            stats.codeLines++;
-                        }
-                    } else if (ext == ".py" || ext == ".pyx" || ext == ".rb" ||
-                               ext == ".sh" || ext == ".bash" || ext == ".pl" ||
-                               ext == ".r" || ext == ".lua" || ext == ".ps1" ||
-                               ext == ".yaml" || ext == ".yml" || ext == ".toml" ||
-                               ext == ".cfg" || ext == ".ini" || ext == ".cmake" ||
-                               ext == ".sql") {
+                        continue;
+                    }
+
+                    // Check for # comment first (script / config languages)
+                    if (isHashExt(ext)) {
                         if (line[start] == '#') {
                             stats.commentLines++;
                         } else {
                             stats.codeLines++;
                         }
-                    } else {
-                        // Unknown type, treat as code
-                        stats.codeLines++;
+                        continue;
                     }
+
+                    // C-family /* */ block comment languages
+                    if (isSlashStarExt(ext)) {
+                        // Handle this line within a block comment
+                        if (inBlock) {
+                            stats.commentLines++;
+                            auto endPos = line.find("*/", start);
+                            if (endPos != std::string::npos) {
+                                inBlock = false;
+                            }
+                            continue;
+                        }
+
+                        // Check for // single-line comment
+                        if (line.size() - start >= 2 && line[start] == '/' && line[start + 1] == '/') {
+                            stats.commentLines++;
+                            continue;
+                        }
+
+                        // Check for /* possibly on this line
+                        auto blockStart = line.find("/*", start);
+                        if (blockStart != std::string::npos) {
+                            auto afterStart = blockStart + 2;
+                            auto blockEnd = line.find("*/", afterStart);
+                            if (blockEnd != std::string::npos) {
+                                // /* and */ on same line — inline block comment
+                                // Check if there is code before or after the comment
+                                bool codeBefore = false;
+                                for (size_t i = start; i < blockStart; ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        codeBefore = true;
+                                        break;
+                                    }
+                                }
+                                bool codeAfter = false;
+                                for (size_t i = blockEnd + 2; i < line.size(); ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        codeAfter = true;
+                                        break;
+                                    }
+                                }
+                                if (codeBefore || codeAfter) {
+                                    stats.codeLines++;
+                                } else {
+                                    stats.commentLines++;
+                                }
+                            } else {
+                                // /* starts here but doesn't end — enter block mode
+                                inBlock = true;
+                                // Check code before /*
+                                bool hasCode = false;
+                                for (size_t i = start; i < blockStart; ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        hasCode = true;
+                                        break;
+                                    }
+                                }
+                                if (hasCode) {
+                                    stats.codeLines++;
+                                } else {
+                                    stats.commentLines++;
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Plain code line
+                        stats.codeLines++;
+                        continue;
+                    }
+
+                    // Unknown type, treat as code
+                    stats.codeLines++;
                 }
+                if (file.bad()) {
+                    stats.unreadableFiles++;
+                }
+            } else {
+                stats.unreadableFiles++;
             }
         }
 
@@ -274,10 +377,18 @@ StructureCheck Analyzer::checkStructure(const std::filesystem::path& root) const
         if (lower == "dockerfile" || lower.find(".dockerfile") != std::string::npos)
             check.hasDockerfile = true;
 
-        // CI detection
-        if (lower == ".github" || lower == ".gitlab-ci.yml" || lower == "jenkinsfile" ||
-            lower == ".circleci" || lower == ".travis.yml" || lower == "azure-pipelines.yml")
+        // CI detection — look for well-known CI config files at repo root,
+        // or check that .github/workflows directory exists (not just .github).
+        if (lower == ".github") {
+            if (entry.is_directory(ec)) {
+                auto workflowsPath = entry.path() / "workflows";
+                check.hasCi = std::filesystem::exists(workflowsPath, ec);
+            }
+        } else if (lower == ".gitlab-ci.yml" || lower == "jenkinsfile" ||
+                   lower == ".circleci" || lower == ".travis.yml" ||
+                   lower == "azure-pipelines.yml") {
             check.hasCi = true;
+        }
 
         // Build files
         static const std::set<std::string> BUILD_FILES = {
@@ -316,15 +427,17 @@ nlohmann::json Analyzer::buildRepository(const std::filesystem::path& path) cons
 
 nlohmann::json Analyzer::buildSummary(const FileStats& stats) const {
     return {
-        {"totalFiles",    stats.totalFiles},
-        {"sourceFiles",   stats.sourceFiles},
-        {"documentFiles", stats.documentFiles},
-        {"configFiles",   stats.configFiles},
-        {"testFiles",     stats.testFiles},
-        {"totalLines",    stats.totalLines},
-        {"codeLines",     stats.codeLines},
-        {"commentLines",  stats.commentLines},
-        {"blankLines",    stats.blankLines}
+        {"totalFiles",      stats.totalFiles},
+        {"sourceFiles",     stats.sourceFiles},
+        {"documentFiles",   stats.documentFiles},
+        {"configFiles",     stats.configFiles},
+        {"testFiles",       stats.testFiles},
+        {"totalLines",      stats.totalLines},
+        {"codeLines",       stats.codeLines},
+        {"commentLines",    stats.commentLines},
+        {"blankLines",      stats.blankLines},
+        {"skippedDirs",     stats.skippedDirs},
+        {"unreadableFiles", stats.unreadableFiles}
     };
 }
 

@@ -23,6 +23,8 @@ struct FileStats {
     size_t codeLines = 0;
     size_t commentLines = 0;
     size_t blankLines = 0;
+    size_t skippedDirs = 0;
+    size_t unreadableFiles = 0;
 };
 
 struct LangStats {
