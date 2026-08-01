@@ -1,0 +1,11 @@
+{
+  "protocolVersion": "1.0",
+  "taskId": "task_demo_001",
+  "status": "SUCCESS",
+  "repository": {
+    "path": "./repositories/demo-project",
+    "name": "demo-project"
+  },
+  "summary": {
+    "totalFiles": 12,
+  }
