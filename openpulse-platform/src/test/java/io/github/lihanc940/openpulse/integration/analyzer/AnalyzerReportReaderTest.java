@@ -40,6 +40,18 @@ class AnalyzerReportReaderTest {
     }
 
     @Test
+    void ignoresUnknownFieldsInCompatibleProtocolVersion() {
+        AnalyzerReport report = reader.read(CONTRACTS_DIR.resolve("analyzer-report-with-extra-fields.json"));
+
+        assertThat(report.protocolVersion()).isEqualTo("1.0");
+        assertThat(report.taskId()).isEqualTo("task_demo_extra_fields");
+        assertThat(report.summary().totalFiles()).isEqualTo(12);
+        assertThat(report.languages()).hasSize(1);
+        assertThat(report.languages().getFirst().name()).isEqualTo("Java");
+        assertThat(report.risks().getFirst().ruleId()).isEqualTo("MISSING_LICENSE");
+    }
+
+    @Test
     void rejectsMissingReportFile() {
         Path missingReport = CONTRACTS_DIR.resolve("missing-report.json");
 

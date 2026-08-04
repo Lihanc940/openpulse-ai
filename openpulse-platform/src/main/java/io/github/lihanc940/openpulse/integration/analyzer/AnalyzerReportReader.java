@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,15 +37,8 @@ public class AnalyzerReportReader {
     }
 
     private AnalyzerReport readJson(Path reportPath) {
-        String reportJson;
         try {
-            reportJson = Files.readString(reportPath);
-        } catch (IOException exception) {
-            throw new AnalyzerReportReadException("Failed to read analyzer report file: " + reportPath, exception);
-        }
-
-        try {
-            return objectMapper.readValue(reportJson, AnalyzerReport.class);
+            return objectMapper.readValue(reportPath.toFile(), AnalyzerReport.class);
         } catch (JacksonException exception) {
             throw new AnalyzerReportReadException("Analyzer report JSON is malformed: " + reportPath, exception);
         }

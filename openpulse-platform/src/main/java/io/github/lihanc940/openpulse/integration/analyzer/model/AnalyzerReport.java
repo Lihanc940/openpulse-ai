@@ -1,11 +1,13 @@
 package io.github.lihanc940.openpulse.integration.analyzer.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record AnalyzerReport(
         String protocolVersion,
         String taskId,
@@ -21,25 +23,29 @@ public record AnalyzerReport(
         OffsetDateTime generatedAt
 ) {
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Repository(String path, String name) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Summary(
-            int totalFiles,
-            int sourceFiles,
-            int documentFiles,
-            int configFiles,
-            int testFiles,
-            int totalLines,
-            int codeLines,
-            int commentLines,
-            int blankLines
+            long totalFiles,
+            long sourceFiles,
+            long documentFiles,
+            long configFiles,
+            long testFiles,
+            long totalLines,
+            long codeLines,
+            long commentLines,
+            long blankLines
     ) {
     }
 
-    public record Language(String name, int files, int lines) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Language(String name, long files, long lines) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Structure(
             boolean hasReadme,
             boolean hasLicense,
@@ -52,6 +58,7 @@ public record AnalyzerReport(
     ) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Quality(
             int complexityScore,
             int maintainabilityScore,
@@ -60,17 +67,19 @@ public record AnalyzerReport(
     ) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Risk(
             String ruleId,
             String type,
             RiskLevel level,
             String file,
-            int line,
+            long line,
             String message,
             Map<String, Object> evidence
     ) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Dependencies(
             List<Map<String, Object>> nodes,
             List<Map<String, Object>> edges
