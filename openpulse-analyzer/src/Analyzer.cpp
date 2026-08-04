@@ -345,10 +345,29 @@ std::vector<LangStats> Analyzer::detectLanguages(const std::filesystem::path& ro
         ++it;
     }
 
+    // Only include programming languages in the output.
+    // Markup / config / data languages (Markdown, JSON, YAML, etc.) are
+    // counted in summary.*Files but are not "languages" in the protocol sense.
+    static const std::set<std::string> PROGRAMMING_LANGUAGES = {
+        "C", "C++", "C/C++ Header",
+        "Java", "Kotlin", "Scala",
+        "Python", "Cython",
+        "JavaScript", "TypeScript",
+        "Go", "Rust", "Ruby", "PHP",
+        "Swift", "C#", "F#",
+        "Vue", "Svelte",
+        "CSS", "SCSS", "Less",
+        "SQL",
+        "Shell", "PowerShell", "Batch",
+        "Lua", "R", "Perl", "Dart", "Zig", "Nim"
+    };
+
     // Sort by file count descending
     std::vector<LangStats> result;
     for (auto& [name, ls] : langMap) {
-        result.push_back(std::move(ls));
+        if (PROGRAMMING_LANGUAGES.count(name) > 0) {
+            result.push_back(std::move(ls));
+        }
     }
     std::sort(result.begin(), result.end(),
               [](const LangStats& a, const LangStats& b) { return a.files > b.files; });
@@ -435,9 +454,7 @@ nlohmann::json Analyzer::buildSummary(const FileStats& stats) const {
         {"totalLines",      stats.totalLines},
         {"codeLines",       stats.codeLines},
         {"commentLines",    stats.commentLines},
-        {"blankLines",      stats.blankLines},
-        {"skippedDirs",     stats.skippedDirs},
-        {"unreadableFiles", stats.unreadableFiles}
+        {"blankLines",      stats.blankLines}
     };
 }
 

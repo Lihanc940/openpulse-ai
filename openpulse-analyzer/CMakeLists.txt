@@ -21,3 +21,26 @@ if(MSVC)
   target_compile_options(openpulse-analyzer PRIVATE /utf-8)
 endif()
 target_link_libraries(openpulse-analyzer PRIVATE nlohmann_json::nlohmann_json)
+
+# --- Tests ---
+option(BUILD_TESTS "Build unit tests" ON)
+if(BUILD_TESTS)
+  add_executable(openpulse-analyzer-test
+    src/Analyzer.cpp
+    tests/test_analyzer.cpp
+  )
+  target_include_directories(openpulse-analyzer-test PRIVATE include)
+  target_compile_definitions(openpulse-analyzer-test PRIVATE OPENPULSE_TEST)
+  if(MSVC)
+    target_compile_options(openpulse-analyzer-test PRIVATE /utf-8)
+  endif()
+  target_link_libraries(openpulse-analyzer-test PRIVATE nlohmann_json::nlohmann_json)
+
+  # Register a CTest test that runs from the repo root so the fixture path works
+  enable_testing()
+  add_test(
+    NAME openpulse-analyzer-test
+    COMMAND openpulse-analyzer-test
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+endif()

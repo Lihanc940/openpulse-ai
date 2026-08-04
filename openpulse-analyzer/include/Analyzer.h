@@ -48,7 +48,9 @@ class Analyzer {
 public:
     nlohmann::json generateReport(const AnalyzerConfig& config) const;
 
+#ifndef OPENPULSE_TEST
 private:
+#endif
     // Scanning
     FileStats scanDirectory(const std::filesystem::path& root) const;
     std::vector<LangStats> detectLanguages(const std::filesystem::path& root) const;
