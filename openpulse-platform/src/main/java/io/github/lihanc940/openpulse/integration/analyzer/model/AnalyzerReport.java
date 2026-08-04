@@ -60,10 +60,10 @@ public record AnalyzerReport(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Quality(
-            int complexityScore,
-            int maintainabilityScore,
-            int documentationScore,
-            int testScore
+            long complexityScore,
+            long maintainabilityScore,
+            long documentationScore,
+            long testScore
     ) {
     }
 
