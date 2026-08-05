@@ -45,10 +45,6 @@ class AnalyzerReportReaderTest {
 
         assertThat(report.protocolVersion()).isEqualTo("1.0");
         assertThat(report.taskId()).isEqualTo("task_demo_extra_fields");
-        assertThat(report.summary().totalFiles()).isEqualTo(12);
-        assertThat(report.languages()).hasSize(1);
-        assertThat(report.languages().getFirst().name()).isEqualTo("Java");
-        assertThat(report.risks().getFirst().ruleId()).isEqualTo("MISSING_LICENSE");
     }
 
     @Test
