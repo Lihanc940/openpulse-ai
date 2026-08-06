@@ -6,7 +6,7 @@ OpenPulse AI 是一个面向 GitHub 开源仓库的智能分析平台。第一�
 
 ## 当前阶段
 
-现在处于 P0 工程基线阶段：先固定产品边界、总体架构、Java/C++ 协议和协作流程，再进入业务代码。
+现在处于 P1 本地最小闭环阶段：先在本地可靠接通 Java 与 C++，验证进程调用、退出码、超时和 JSON 报告边界，再进入 GitHub 下载、数据库和 HTTP 任务编排。
 
 建议先阅读：
 
@@ -43,10 +43,11 @@ Openpulse AI/
 Java 负责人已完成：
 
 - `docs/tasks/01-java-platform-bootstrap.md`
+- `docs/tasks/02-java-analyzer-report-parser.md`
 
 Java 负责人当前执行：
 
-- `docs/tasks/02-java-analyzer-report-parser.md`
-- 分支：`feat/platform-report-parser`
+- `docs/tasks/03-java-analyzer-process-runner.md`
+- 分支：`feat/platform-analyzer-runner`
 
 任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。
