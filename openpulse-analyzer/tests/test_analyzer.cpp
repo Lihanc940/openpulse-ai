@@ -119,12 +119,12 @@ void test_scanDirectory_basicStats(const fs::path& fixture) {
     // We created: README.md, LICENSE, src/main.cpp, src/util.py,
     //             src/config.json, src/util.spec.js, .github/workflows/ci.yml,
     //             CMakeLists.txt
-    // Skipped: .git/ (skipped), node_modules/ (skipped)
+    // Skipped: __pycache__/, bin/
     TEST(stats.totalFiles == 8);
     TEST(stats.sourceFiles >= 3);  // main.cpp, util.py, util.spec.js (js is source)
     TEST(stats.documentFiles >= 1); // README.md
     TEST(stats.configFiles >= 1);   // config.json, ci.yml (yml is config)
-    TEST(stats.skippedDirs >= 2);   // .git, node_modules
+    TEST(stats.skippedDirs >= 2);   // __pycache__, bin
     TEST(stats.totalLines > 0);
     TEST(stats.codeLines > 0);
     TEST(stats.commentLines > 0);   // both cpp and py have comments
