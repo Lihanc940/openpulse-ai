@@ -40,9 +40,13 @@ Openpulse AI/
 
 ## 当前开发任务
 
-Java 负责人当前执行：
+Java 负责人已完成：
 
 - `docs/tasks/01-java-platform-bootstrap.md`
-- 分支：`feat/platform-bootstrap`
+
+Java 负责人当前执行：
+
+- `docs/tasks/02-java-analyzer-report-parser.md`
+- 分支：`feat/platform-report-parser`
 
 任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。

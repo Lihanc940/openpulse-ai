@@ -1,0 +1,71 @@
+{
+  "protocolVersion": "1.0",
+  "taskId": "task_demo_extra_fields",
+  "status": "SUCCESS",
+  "repository": {
+    "path": "./repositories/demo-project",
+    "name": "demo-project",
+    "defaultBranch": "main"
+  },
+  "summary": {
+    "totalFiles": 12,
+    "sourceFiles": 6,
+    "documentFiles": 1,
+    "configFiles": 2,
+    "testFiles": 1,
+    "totalLines": 1200,
+    "codeLines": 860,
+    "commentLines": 180,
+    "blankLines": 160,
+    "binaryFiles": 3
+  },
+  "languages": [
+    {
+      "name": "Java",
+      "files": 4,
+      "lines": 700,
+      "generatedFiles": 1
+    }
+  ],
+  "structure": {
+    "hasReadme": true,
+    "hasLicense": false,
+    "hasContributing": false,
+    "hasChangelog": false,
+    "hasCi": true,
+    "hasTests": true,
+    "hasDockerfile": false,
+    "buildFiles": ["pom.xml"],
+    "hasEditorConfig": true
+  },
+  "quality": {
+    "complexityScore": 76,
+    "maintainabilityScore": 82,
+    "documentationScore": 65,
+    "testScore": 58,
+    "duplicationScore": 91
+  },
+  "risks": [
+    {
+      "ruleId": "MISSING_LICENSE",
+      "type": "PROJECT_STRUCTURE",
+      "level": "MEDIUM",
+      "file": "",
+      "line": 0,
+      "message": "项目缺少 LICENSE 文件，建议补充开源许可证。",
+      "evidence": {
+        "expectedFile": "LICENSE"
+      },
+      "confidence": 0.95
+    }
+  ],
+  "dependencies": {
+    "nodes": [],
+    "edges": [],
+    "metadata": {
+      "format": "draft"
+    }
+  },
+  "generatedAt": "2026-07-27T22:50:00+08:00",
+  "analyzerBuild": "local-dev"
+}

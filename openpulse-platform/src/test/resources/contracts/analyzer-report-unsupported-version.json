@@ -1,0 +1,66 @@
+{
+  "protocolVersion": "2.0",
+  "taskId": "task_demo_001",
+  "status": "SUCCESS",
+  "repository": {
+    "path": "./repositories/demo-project",
+    "name": "demo-project"
+  },
+  "summary": {
+    "totalFiles": 12,
+    "sourceFiles": 6,
+    "documentFiles": 1,
+    "configFiles": 2,
+    "testFiles": 1,
+    "totalLines": 1200,
+    "codeLines": 860,
+    "commentLines": 180,
+    "blankLines": 160
+  },
+  "languages": [
+    {
+      "name": "Java",
+      "files": 4,
+      "lines": 700
+    },
+    {
+      "name": "C++",
+      "files": 2,
+      "lines": 300
+    }
+  ],
+  "structure": {
+    "hasReadme": true,
+    "hasLicense": false,
+    "hasContributing": false,
+    "hasChangelog": false,
+    "hasCi": true,
+    "hasTests": true,
+    "hasDockerfile": false,
+    "buildFiles": ["pom.xml", "CMakeLists.txt"]
+  },
+  "quality": {
+    "complexityScore": 76,
+    "maintainabilityScore": 82,
+    "documentationScore": 65,
+    "testScore": 58
+  },
+  "risks": [
+    {
+      "ruleId": "MISSING_LICENSE",
+      "type": "PROJECT_STRUCTURE",
+      "level": "MEDIUM",
+      "file": "",
+      "line": 0,
+      "message": "项目缺少 LICENSE 文件，建议补充开源许可证。",
+      "evidence": {
+        "expectedFile": "LICENSE"
+      }
+    }
+  ],
+  "dependencies": {
+    "nodes": [],
+    "edges": []
+  },
+  "generatedAt": "2026-07-27T22:50:00+08:00"
+}
