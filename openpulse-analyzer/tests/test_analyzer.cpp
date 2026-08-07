@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -275,10 +276,11 @@ void test_generateReport_smoke(const fs::path& fixture) {
         TEST(name != "Other");
     }
 
-    // Timestamp should be ISO 8601 with timezone
+    // Timestamp must end with Z or ±HH:MM (ISO-8601 offset)
     std::string ts = report["generatedAt"];
     TEST(ts.find("T") != std::string::npos);
-    TEST(ts.find("+") != std::string::npos || ts.find("-") != std::string::npos);
+    // Matches strings that end with Z or +HH:MM or -HH:MM
+    TEST(std::regex_search(ts, std::regex(R"((Z|[+-]\d{2}:\d{2})$)")));
 }
 
 // --- Run-all driver ---

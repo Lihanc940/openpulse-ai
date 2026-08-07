@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -549,21 +550,48 @@ std::string Analyzer::generateTaskId() const {
 std::string Analyzer::generateTimestamp() const {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
-    std::tm tm{};
+    std::tm local_tm{};
 #ifdef _WIN32
-    localtime_s(&tm, &time);
+    localtime_s(&local_tm, &time);
 #else
-    localtime_r(&time, &tm);
+    localtime_r(&time, &local_tm);
 #endif
+
+    // Format date-time portion: YYYY-MM-DDTHH:MM:SS
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S");
-    char tz[10]{};
-    std::strftime(tz, sizeof(tz), "%z", &tm);
-    std::string tzStr(tz);
-    if (tzStr.size() == 5) {
-        tzStr.insert(3, ":");  // +0800 -> +08:00
+    oss << std::put_time(&local_tm, "%Y-%m-%dT%H:%M:%S");
+
+    // Compute UTC offset in seconds.
+    // Interpret the local broken-down time as UTC via _mkgmtime/timegm;
+    // the difference from the real UTC time gives the offset with sign.
+    // Example UTC+8 (local ahead): _mkgmtime returns an epoch *larger* than
+    // the true epoch → offset positive → formatted as +08:00.
+    std::tm tm_for_offset = local_tm;
+    long offset_seconds = 0;
+#ifdef _WIN32
+    auto utc_from_local = _mkgmtime(&tm_for_offset);
+    if (utc_from_local != -1) {
+        offset_seconds = static_cast<long>(std::difftime(utc_from_local, time));
     }
-    oss << tzStr;
+#else
+    auto utc_from_local = timegm(&tm_for_offset);
+    if (utc_from_local != -1) {
+        offset_seconds = static_cast<long>(std::difftime(utc_from_local, time));
+    }
+#endif
+
+    // Format offset as Z, +HH:MM, or -HH:MM
+    if (offset_seconds == 0) {
+        oss << 'Z';
+    } else {
+        long abs_offset = std::labs(offset_seconds);
+        long hours   = abs_offset / 3600;
+        long minutes = (abs_offset % 3600) / 60;
+        oss << (offset_seconds > 0 ? '+' : '-')
+            << std::setfill('0') << std::setw(2) << hours
+            << ':'
+            << std::setfill('0') << std::setw(2) << minutes;
+    }
     return oss.str();
 }
 
