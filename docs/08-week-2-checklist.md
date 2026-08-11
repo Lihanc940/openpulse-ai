@@ -16,11 +16,13 @@
 Java 负责人先补一个本地闭环入口：
 
 - 新增 `POST /api/v1/analysis/local` 或等价接口。
+- 该接口只作为本机开发诊断入口，通过配置显式启用，默认关闭，不能暴露到公网。
 - 请求只接收一个已经存在的本地目录路径。
 - 调用现有 `AnalyzerProcessRunner`。
 - 返回已解析的 `AnalyzerReport` 或稳定错误响应。
+- 错误响应不返回服务器绝对路径、stdout、stderr 或异常堆栈。
 - 不接数据库、不下载 GitHub、不做 AI。
-- 用 MockMvc 覆盖成功、路径非法、runner 失败。
+- 用 MockMvc 覆盖接口关闭、成功、请求非法、路径非法和 runner 失败。
 
 这一步完成后，P1 本地最小闭环才算从“内部能力”变成“可被 API 调用”。
 
@@ -127,7 +129,7 @@ Week 3 再集中做规则、评分、报告查询和前端展示。
 
 ## 本周完成标准
 
-- P1 本地分析 API 可以通过 HTTP 调用 runner。
+- P1 本地分析 API 可以在显式启用后通过 HTTP 调用 runner，且默认关闭。
 - GitHub URL 解析有稳定测试。
 - GitHub 元数据获取边界清楚。
 - 仓库下载有超时、大小和清理保护。
