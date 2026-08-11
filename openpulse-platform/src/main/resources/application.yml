@@ -2,5 +2,10 @@ spring:
   application:
     name: openpulse-platform
 
+openpulse:
+  analyzer:
+    executable: ${OPENPULSE_ANALYZER_EXECUTABLE:openpulse-analyzer}
+    timeout: ${OPENPULSE_ANALYZER_TIMEOUT:30s}
+
 server:
   port: ${SERVER_PORT:8080}

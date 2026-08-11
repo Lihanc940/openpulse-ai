@@ -1,0 +1,17 @@
+package io.github.lihanc940.openpulse.integration.analyzer;
+
+public enum AnalyzerExecutionFailure {
+    INVALID_REPOSITORY_PATH,
+    TEMPORARY_DIRECTORY_CREATION_FAILED,
+    START_FAILED,
+    TIMEOUT,
+    INTERRUPTED,
+    INVALID_ARGUMENTS,
+    REPOSITORY_NOT_FOUND,
+    SCAN_FAILED,
+    REPORT_OUTPUT_FAILED,
+    UNKNOWN_EXIT_CODE,
+    REPORT_MISSING,
+    REPORT_INVALID,
+    CLEANUP_FAILED
+}
