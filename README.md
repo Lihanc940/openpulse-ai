@@ -18,6 +18,7 @@ OpenPulse AI 是一个面向 GitHub 开源仓库的智能分析平台。第一�
 6. `docs/06-roadmap.md`：各阶段的目标和完成标准。
 7. `docs/07-development-environment.md`：双方需要安装什么，以及首次建仓流程。
 8. `docs/03-week-1-checklist.md`：第一周动手清单。
+9. `docs/08-week-2-checklist.md`：第二周动手清单。
 
 ## 推荐仓库结构
 
@@ -44,10 +45,11 @@ Java 负责人已完成：
 
 - `docs/tasks/01-java-platform-bootstrap.md`
 - `docs/tasks/02-java-analyzer-report-parser.md`
+- `docs/tasks/03-java-analyzer-process-runner.md`
 
 Java 负责人当前执行：
 
-- `docs/tasks/03-java-analyzer-process-runner.md`
-- 分支：`feat/platform-analyzer-runner`
+- `docs/tasks/04-java-local-analysis-api.md`
+- 建议分支：`feat/platform-local-analysis-api`
 
 任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。
