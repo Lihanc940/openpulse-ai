@@ -3,6 +3,8 @@ spring:
     name: openpulse-platform
 
 openpulse:
+  analysis:
+    local-api-enabled: ${OPENPULSE_LOCAL_ANALYSIS_API_ENABLED:false}
   analyzer:
     executable: ${OPENPULSE_ANALYZER_EXECUTABLE:openpulse-analyzer}
     timeout: ${OPENPULSE_ANALYZER_TIMEOUT:30s}
