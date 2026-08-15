@@ -1,0 +1,12 @@
+package io.github.lihanc940.openpulse.integration.github;
+
+public enum GithubRepositoryFailure {
+    INVALID_REPOSITORY_URL,
+    REPOSITORY_NOT_FOUND_OR_INACCESSIBLE,
+    PRIVATE_REPOSITORY_UNSUPPORTED,
+    AUTHENTICATION_FAILED,
+    RATE_LIMITED,
+    GITHUB_UNAVAILABLE,
+    TIMEOUT,
+    INVALID_RESPONSE
+}
