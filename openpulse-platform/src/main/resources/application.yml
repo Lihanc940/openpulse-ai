@@ -8,6 +8,11 @@ openpulse:
   analyzer:
     executable: ${OPENPULSE_ANALYZER_EXECUTABLE:openpulse-analyzer}
     timeout: ${OPENPULSE_ANALYZER_TIMEOUT:30s}
+  github:
+    api-base-url: ${OPENPULSE_GITHUB_API_BASE_URL:https://api.github.com}
+    token: ${OPENPULSE_GITHUB_TOKEN:}
+    connect-timeout: ${OPENPULSE_GITHUB_CONNECT_TIMEOUT:3s}
+    read-timeout: ${OPENPULSE_GITHUB_READ_TIMEOUT:10s}
 
 server:
   port: ${SERVER_PORT:8080}
