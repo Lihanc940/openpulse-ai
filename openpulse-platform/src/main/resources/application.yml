@@ -13,6 +13,11 @@ openpulse:
     token: ${OPENPULSE_GITHUB_TOKEN:}
     connect-timeout: ${OPENPULSE_GITHUB_CONNECT_TIMEOUT:3s}
     read-timeout: ${OPENPULSE_GITHUB_READ_TIMEOUT:10s}
+    archive:
+      read-timeout: ${OPENPULSE_GITHUB_ARCHIVE_READ_TIMEOUT:60s}
+      max-archive-size: ${OPENPULSE_GITHUB_ARCHIVE_MAX_SIZE:50MB}
+      max-extracted-size: ${OPENPULSE_GITHUB_ARCHIVE_MAX_EXTRACTED_SIZE:250MB}
+      max-entry-count: ${OPENPULSE_GITHUB_ARCHIVE_MAX_ENTRY_COUNT:50000}
 
 server:
   port: ${SERVER_PORT:8080}
