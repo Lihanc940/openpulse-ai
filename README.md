@@ -6,7 +6,7 @@ OpenPulse AI 是一个面向 GitHub 开源仓库的智能分析平台。第一�
 
 ## 当前阶段
 
-P1 本地最小闭环已经完成，现在进入 P2 真实 GitHub 仓库分析阶段。当前先建立 GitHub URL、仓库元数据和外部 API 失败边界，再进入受控下载、持久化和分析任务编排。
+P1 本地最小闭环已经完成，现在进入 P2 真实 GitHub 仓库分析阶段。GitHub URL 解析、公开仓库元数据查询和受控下载已经完成，当前进入任务与报告持久化，再逐步接入分析任务编排。
 
 建议先阅读：
 
@@ -47,10 +47,12 @@ Java 负责人已完成：
 - `docs/tasks/02-java-analyzer-report-parser.md`
 - `docs/tasks/03-java-analyzer-process-runner.md`
 - `docs/tasks/04-java-local-analysis-api.md`
+- `docs/tasks/05-java-github-repository-metadata.md`
+- `docs/tasks/06-java-github-repository-download.md`
 
 Java 负责人当前执行：
 
-- `docs/tasks/05-java-github-repository-metadata.md`
-- 建议分支：`feat/platform-github-metadata`
+- `docs/tasks/07-java-analysis-persistence.md`
+- 建议分支：`feat/platform-analysis-persistence`
 
 任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。
