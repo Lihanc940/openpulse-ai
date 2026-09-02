@@ -1,34 +1,43 @@
 # OpenPulse AI
 
-OpenPulse AI 是一个面向 GitHub 开源仓库的智能分析平台。第一版目标是跑通一个清晰闭环：
+OpenPulse AI 是一个面向开发者和 AI 工具的本地优先仓库分析工具。它先在用户环境中生成透明、可验证的结构化报告，再由人直接阅读，或交给 Skill、MCP 等适配入口使用。
 
-输入 GitHub 公共仓库地址 -> 获取仓库信息 -> 下载代码 -> 调用 C++ 分析引擎 -> 生成 JSON 报告 -> Java 保存并计算健康分 -> AI 生成解释和建议 -> 前端展示报告。
+当前目标闭环：
+
+```text
+本地仓库 -> C++ 分析核心 -> 透明 JSON 报告 -> 人直接阅读或 AI 按需解释
+```
+
+网站没有被删除，但不再是唯一入口。Java Platform 和 Vue Web 被定位为后续团队模式，用于 GitHub 获取、任务历史、报告持久化和多人查看。
 
 ## 当前阶段
 
-P1 本地最小闭环已经完成，现在进入 P2 真实 GitHub 仓库分析阶段。GitHub URL 解析、公开仓库元数据查询和受控下载已经完成，当前进入任务与报告持久化，再逐步接入分析任务编排。
+P1 Java/C++ 本地协作闭环已经完成，GitHub URL 解析、公开仓库元数据查询和受控下载也已经完成。任务 7 的持久化实现已提交 PR #16 等待评审。
+
+2026-09-02，项目通过 `v0.2` 产品方向复核：暂停继续堆叠网站、AI 总结和黑盒健康分，下一阶段先验证“本地 CLI + 透明报告 + 一个 AI Skill”是否真的能给开发者带来稳定、节省上下文的仓库分析能力。完整决定见 `docs/09-product-direction-v0.2.md`。
 
 建议先阅读：
 
 1. `docs/00-glossary.md`：项目常见名词解释。
-2. `docs/01-mvp-v0.1.md`：第一版到底做什么、不做什么。
-3. `docs/04-architecture.md`：系统为什么这样拆分。
-4. `docs/02-analyzer-json-protocol.md`：Java 和 C++ 怎么通信。
-5. `docs/05-git-workflow.md`：两个人如何提交和评审代码。
-6. `docs/06-roadmap.md`：各阶段的目标和完成标准。
+2. `docs/09-product-direction-v0.2.md`：当前产品定位、范围和验证门槛。
+3. `docs/04-architecture.md`：本地核心、AI 适配和团队模式如何拆分。
+4. `docs/02-analyzer-json-protocol.md`：Java 和 C++ 当前如何通信。
+5. `docs/06-roadmap.md`：各阶段的目标和完成标准。
+6. `docs/05-git-workflow.md`：两个人如何提交和评审代码。
 7. `docs/07-development-environment.md`：双方需要安装什么，以及首次建仓流程。
-8. `docs/03-week-1-checklist.md`：第一周动手清单。
-9. `docs/08-week-2-checklist.md`：第二周动手清单。
+8. `docs/01-mvp-v0.1.md`：已经被 v0.2 取代的历史 MVP 方案。
+9. `docs/03-week-1-checklist.md`：第一周动手清单。
+10. `docs/08-week-2-checklist.md`：第二周动手清单和方向调整位置。
 
 ## 推荐仓库结构
 
-第一版可以先用一个总仓库管理三个子项目：
+当前使用一个总仓库管理三个子项目：
 
 ```text
 Openpulse AI/
-  openpulse-platform/   Java Spring Boot 后端
-  openpulse-analyzer/   C++20 静态分析引擎
-  openpulse-web/        Vue 3 前端
+  openpulse-platform/   Java 编排、持久化和后续团队服务
+  openpulse-analyzer/   C++20 本地分析核心
+  openpulse-web/        后续团队模式的 Vue 3 前端
   docs/                 开发文档、接口协议、学习笔记
   document/             原始项目计划书
 ```
@@ -50,9 +59,9 @@ Java 负责人已完成：
 - `docs/tasks/05-java-github-repository-metadata.md`
 - `docs/tasks/06-java-github-repository-download.md`
 
-Java 负责人当前执行：
+Java 负责人已完成实现、当前等待 PR 评审：
 
 - `docs/tasks/07-java-analysis-persistence.md`
-- 建议分支：`feat/platform-analysis-persistence`
+- 实现 PR：`#16 feat(platform): add analysis persistence`
 
-任务对话完成本地实现和测试后，回到项目主线对话复核，再 push 并创建 Pull Request。
+下一项实现任务暂不直接沿用旧路线。先完成 `v0.2` 方向文档评审，再共同定义透明报告、CLI 分发和真实仓库验证任务。
