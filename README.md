@@ -12,9 +12,9 @@ OpenPulse AI 是一个面向开发者和 AI 工具的本地优先仓库分析工
 
 ## 当前阶段
 
-P1 Java/C++ 本地协作闭环已经完成，GitHub URL 解析、公开仓库元数据查询和受控下载也已经完成。任务 7 的持久化实现已提交 PR #16 等待评审。
+P1 Java/C++ 本地协作闭环已经完成，GitHub URL 解析、公开仓库元数据查询、受控下载以及任务和报告持久化也已经合并完成。
 
-2026-09-02，项目通过 `v0.2` 产品方向复核：暂停继续堆叠网站、AI 总结和黑盒健康分，下一阶段先验证“本地 CLI + 透明报告 + 一个 AI Skill”是否真的能给开发者带来稳定、节省上下文的仓库分析能力。完整决定见 `docs/09-product-direction-v0.2.md`。
+2026-09-02，项目通过 `v0.2` 产品方向复核：暂停继续堆叠网站、AI 总结和黑盒健康分，下一阶段先验证“本地 CLI + 透明报告 + 一个 Codex Skill”是否真的能给开发者带来稳定、节省上下文的仓库分析能力。完整决定见 `docs/09-product-direction-v0.2.md`。
 
 建议先阅读：
 
@@ -58,10 +58,12 @@ Java 负责人已完成：
 - `docs/tasks/04-java-local-analysis-api.md`
 - `docs/tasks/05-java-github-repository-metadata.md`
 - `docs/tasks/06-java-github-repository-download.md`
-
-Java 负责人已完成实现、当前等待 PR 评审：
-
 - `docs/tasks/07-java-analysis-persistence.md`
-- 实现 PR：`#16 feat(platform): add analysis persistence`
 
-下一项实现任务暂不直接沿用旧路线。先完成 `v0.2` 方向文档评审，再共同定义透明报告、CLI 分发和真实仓库验证任务。
+当前共同任务：
+
+- `docs/tasks/08-v02-validation-baseline.md`
+- Java 负责人主笔，C++ 负责人共同评审
+- 本任务只定义验证基线和记录模板，不修改产品代码，也不提前运行 AI 对照实验
+
+完成验证基线评审后，再分别编写报告协议 v2 和 C++ CLI 分发任务书。
