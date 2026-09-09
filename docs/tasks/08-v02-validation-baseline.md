@@ -78,6 +78,7 @@ docs/validation/
   v0.2-validation-baseline.md
   repository-samples.csv
   repository-runs.csv
+  finding-reviews.csv
   ai-comparisons.csv
   user-trial-template.md
 ```
@@ -87,6 +88,7 @@ docs/validation/
 - `v0.2-validation-baseline.md`：保存假设、实验步骤、门槛、失败处理和版本信息。
 - `repository-samples.csv`：保存 10 个仓库的固定样本信息。
 - `repository-runs.csv`：以后逐次记录分析器运行数据；本任务只创建表头和字段说明，不填写伪造结果。
+- `finding-reviews.csv`：以后逐条保存两位复核者的独立判断和分歧处理；本任务只创建表头和字段说明，不填写伪造结果。
 - `ai-comparisons.csv`：以后记录 AI 对照实验；本任务只创建表头和字段说明，不调用 AI。
 - `user-trial-template.md`：以后由每位试用者复制填写；不得提前编造试用反馈。
 
@@ -198,14 +200,19 @@ NOT_APPLICABLE
 
 每条复核必须记录：
 
-- `sampleId`
-- `ruleId`
-- 相对文件路径和位置
-- 规则类型：仓库结构、文本或语法树
-- 复核结果
-- 是否可行动
-- 一句简短依据
-- 复核人和复核日期
+- 基线版本、稳定的发现唯一标识、`sampleId`、完整 commit SHA 和 `ruleId`。
+- 相对文件路径、起止行列位置和证据 SHA-256 指纹。
+- 规则类型：仓库结构、文本或语法树。
+- 两位复核者各自的匿名编号、复核结果、是否可行动、一句简短依据和带时区复核时间。
+- 最终复核结果、最终是否可行动，以及存在分歧时的处理说明。
+
+`finding-reviews.csv` 表头：
+
+```text
+baseline_version,finding_id,sample_id,commit_sha,rule_id,relative_path,start_line,end_line,start_column,end_column,evidence_fingerprint,rule_type,reviewer_1_id,reviewer_1_verdict,reviewer_1_actionable,reviewer_1_rationale,reviewer_1_reviewed_at,reviewer_2_id,reviewer_2_verdict,reviewer_2_actionable,reviewer_2_rationale,reviewer_2_reviewed_at,final_verdict,final_actionable,disagreement_resolution,notes
+```
+
+`relative_path` 必须是仓库内相对路径。`evidence_fingerprint` 使用规范化证据的 SHA-256，不保存源码正文。普通发现只需要一人复核时，第二位复核者字段保持为空；影响 Java/C++ 共同协议、存在争议或第一位复核者选择 `UNCERTAIN` 时，第二位复核者字段必须完整。只有所需复核完成后才能填写 `final_verdict` 和 `final_actionable`；两人判断不一致时必须填写 `disagreement_resolution`。
 
 不要把 `UNCERTAIN` 强行算作有效发现。存在分歧时保留两人的判断和最终决定，不删除原记录。
 
@@ -394,8 +401,8 @@ git diff --name-only
 
 1. `docs/validation/v0.2-validation-baseline.md` 明确记录 H1 至 H4、指标、门槛和停止条件。
 2. 10 个正式公开仓库已经按语言和成熟度要求选定，并固定完整 commit SHA。
-3. 仓库样本、运行、AI 对照和用户试用模板字段完整且没有伪造结果。
-4. 规范化规则、准确率公式和 AI 公平对照条件写清楚。
+3. 仓库样本、运行、发现复核、AI 对照和用户试用模板字段完整且没有伪造结果。
+4. 规范化规则、基于 `final_verdict` / `final_actionable` 的准确率与可行动率公式，以及 AI 公平对照条件写清楚。
 5. 两位负责人都评审样本和门槛，影响 C++/Java 边界的意见已解决。
 6. 所有引用可访问，CSV 格式可读取，`git diff --check` 通过。
 7. 改动只有文档和空白数据模板，没有产品代码、依赖或实验输出。
