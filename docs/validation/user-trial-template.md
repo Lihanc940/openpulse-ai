@@ -12,6 +12,13 @@
 
 不要填写真实姓名、账号、联系方式、用户名、个人绝对路径、仓库源码或凭据。
 
+## 资格
+
+- `is_project_member`: `[必须是 NO]`
+- `participated_in_installer_development`: `[必须是 NO]`
+
+两者任一不是 `NO` 时，本记录不计入正式安装门槛。
+
 ## 环境
 
 - Windows 版本: `[待填写]`
@@ -20,6 +27,10 @@
 - 安装文档版本或 commit: `[待填写]`
 - 试用仓库类型: `[自有 / 已授权公开仓库]`
 - 试用仓库标识: `[只填允许公开的 URL 或匿名代号]`
+- 缺少运行库或 DLL: `[YES / NO / UNKNOWN]`
+- PATH 未生效: `[YES / NO / UNKNOWN]`
+- 权限不足: `[YES / NO / UNKNOWN]`
+- 杀毒或 SmartScreen 拦截: `[YES / NO / UNKNOWN]`
 
 ## 计时
 

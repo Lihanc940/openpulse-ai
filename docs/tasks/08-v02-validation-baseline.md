@@ -253,14 +253,17 @@ Skill 要求 AI 先读摘要、按需取证；证据不足时允许读取源文�
 `ai-comparisons.csv` 至少包含：
 
 ```text
-baseline_version,pair_id,sample_id,mode,model,reasoning_setting,prompt_version,run_number,started_at,duration_ms,input_tokens,output_tokens,token_source,confirmed_findings,false_positives,uncertain_findings,unsupported_claims,source_file_reads,completed,notes
+baseline_version,pair_id,sample_id,commit_sha,mode,model,reasoning_setting,prompt_version,run_number,cli_version,skill_version,analyzer_version,rule_set_version,report_protocol_version,repository_access,openpulse_report_provided,evidence_snippets_provided,started_at,duration_ms,input_tokens,output_tokens,token_source,confirmed_findings,false_positives,uncertain_findings,unsupported_claims,source_file_reads,review_refs,completed,notes
 ```
 
 要求：
 
 - Token 只记录 API 或工具实际提供的数值，不能自行估算。
 - 无法获得 Token 时填写 `NOT_AVAILABLE`，并依靠耗时和质量指标，不得写成 `0`。
-- AI 输出不直接作为“正确答案”；必须由人工根据仓库证据复核。
+- `repository_access`、`openpulse_report_provided`、`evidence_snippets_provided` 各自填 `YES` 或 `NO`，明确记录 AI 能否访问仓库文件、报告和证据片段。
+- 记录 `cli_version`、`skill_version`、`analyzer_version`、`rule_set_version` 和 `report_protocol_version`；对照组没有 Skill 时 `skill_version` 填 `NOT_APPLICABLE`。
+- AI 输出不直接作为“正确答案”；必须由人工根据仓库证据复核，并用 `review_refs` 把本行计数回溯到 `finding-reviews.csv` 的复核记录。
+- `unsupported_claims` 的计数口径和中位数口径写进基线文档第 8 节和第 10.3 节。
 - 不把完整 AI 对话、整段源码或含个人信息的内容提交到公开仓库，只保存必要统计和短摘要。
 
 ## 用户安装试用
@@ -279,7 +282,8 @@ baseline_version,pair_id,sample_id,mode,model,reasoning_setting,prompt_version,r
 `user-trial-template.md` 至少记录：
 
 - 匿名试用编号，不记录真实姓名、账号或联系方式。
-- 操作系统版本和架构。
+- `is_project_member` 和 `participated_in_installer_development`，两者都必须为 `NO`。
+- 操作系统版本和架构，以及缺少运行库或 DLL、PATH 未生效、权限不足、杀毒或 SmartScreen 拦截。
 - 开始时间、首次成功时间和总耗时。
 - 是否需要项目成员口头帮助。
 - 安装、运行、理解报告和卸载分别是否成功。
