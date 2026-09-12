@@ -88,7 +88,7 @@ docs/validation/
 - `v0.2-validation-baseline.md`：保存假设、实验步骤、门槛、失败处理和版本信息。
 - `repository-samples.csv`：保存 10 个仓库的固定样本信息。
 - `repository-runs.csv`：以后逐次记录分析器运行数据；本任务只创建表头和字段说明，不填写伪造结果。
-- `finding-reviews.csv`：以后逐条保存两位复核者的独立判断和分歧处理；本任务只创建表头和字段说明，不填写伪造结果。
+- `finding-reviews.csv`：以后逐条保存每位复核者的独立判断和分歧处理，一次复核占一行；本任务只创建表头和字段说明，不填写伪造结果。
 - `ai-comparisons.csv`：以后记录 AI 对照实验；本任务只创建表头和字段说明，不调用 AI。
 - `user-trial-template.md`：以后由每位试用者复制填写；不得提前编造试用反馈。
 
@@ -180,8 +180,10 @@ sample_id,repository_url,commit_sha,primary_language,license,selection_group,siz
 `repository-runs.csv` 至少包含：
 
 ```text
-baseline_version,sample_id,run_number,commit_sha,analyzer_version,rule_set_version,started_at,duration_ms,exit_code,report_status,report_bytes,normalized_hash,total_findings,complete_evidence_count,absolute_path_leak,suspected_secret_leak,review_status,notes
+baseline_version,sample_id,run_number,commit_sha,analyzer_version,rule_set_version,report_protocol_version,started_at,duration_ms,timeout_ms,exit_code,run_outcome,failure_kind,report_status,report_bytes,normalized_hash,total_findings,complete_evidence_count,absolute_path_leak,suspected_secret_leak,stdout_leak,stderr_leak,stack_trace_leak,review_status,notes
 ```
+
+`run_outcome` 必须区分正常结束、命中公开限制的受控失败、崩溃和无限等待；失败类别、超时、五类泄露判定和“完整证据清单”的具体规则写在基线文档第 5.3 节。
 
 运行失败也必须保留一行记录。不得只记录成功结果。
 
@@ -203,16 +205,17 @@ NOT_APPLICABLE
 - 基线版本、稳定的发现唯一标识、`sampleId`、完整 commit SHA 和 `ruleId`。
 - 相对文件路径、起止行列位置和证据 SHA-256 指纹。
 - 规则类型：仓库结构、文本或语法树。
-- 两位复核者各自的匿名编号、复核结果、是否可行动、一句简短依据和带时区复核时间。
-- 最终复核结果、最终是否可行动，以及存在分歧时的处理说明。
+- 每位复核者的匿名编号、复核结果、是否可行动、一句简短依据和带时区复核时间；一次复核占一行，行内不出现另一位复核者的结论。
+- 该行是否在不知晓另一位复核者结论的情况下填写。
+- 最终复核结果、最终是否可行动，以及存在分歧时的处理说明；最终结论单独占一行。
 
 `finding-reviews.csv` 表头：
 
 ```text
-baseline_version,finding_id,sample_id,commit_sha,rule_id,relative_path,start_line,end_line,start_column,end_column,evidence_fingerprint,rule_type,reviewer_1_id,reviewer_1_verdict,reviewer_1_actionable,reviewer_1_rationale,reviewer_1_reviewed_at,reviewer_2_id,reviewer_2_verdict,reviewer_2_actionable,reviewer_2_rationale,reviewer_2_reviewed_at,final_verdict,final_actionable,disagreement_resolution,notes
+baseline_version,finding_id,review_row_id,sample_id,commit_sha,rule_id,relative_path,start_line,end_line,start_column,end_column,evidence_fingerprint,rule_type,review_stage,reviewer_id,blinded,verdict,actionable,rationale,reviewed_at,final_verdict,final_actionable,disagreement_resolution,notes
 ```
 
-`relative_path` 必须是仓库内相对路径。`evidence_fingerprint` 使用规范化证据的 SHA-256，不保存源码正文。普通发现只需要一人复核时，第二位复核者字段保持为空；影响 Java/C++ 共同协议、存在争议或第一位复核者选择 `UNCERTAIN` 时，第二位复核者字段必须完整。只有所需复核完成后才能填写 `final_verdict` 和 `final_actionable`；两人判断不一致时必须填写 `disagreement_resolution`。
+`relative_path` 必须是仓库内相对路径。`evidence_fingerprint` 使用规范化证据的 SHA-256，不保存源码正文。`review_stage` 为 `INDEPENDENT` 的行只填该位复核者的结论、可行动性、依据、时间和遮挡声明；普通发现只需要一人独立复核，影响 Java/C++ 共同协议、存在争议或首位复核者选择 `UNCERTAIN` 时必须有两行独立记录。`review_stage` 为 `FINAL` 的行只填最终结论、最终可行动性和分歧处理，`reviewer_id` 填 `BOTH` 或 `ARBITER`。只有所需复核完成后才能填写 `final_verdict` 和 `final_actionable`；两人判断不一致时必须填写 `disagreement_resolution`。
 
 不要把 `UNCERTAIN` 强行算作有效发现。存在分歧时保留两人的判断和最终决定，不删除原记录。
 
