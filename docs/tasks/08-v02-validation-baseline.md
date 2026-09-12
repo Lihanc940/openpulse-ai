@@ -78,6 +78,7 @@ docs/validation/
   v0.2-validation-baseline.md
   repository-samples.csv
   repository-runs.csv
+  finding-reviews.csv
   ai-comparisons.csv
   user-trial-template.md
 ```
@@ -87,6 +88,7 @@ docs/validation/
 - `v0.2-validation-baseline.md`：保存假设、实验步骤、门槛、失败处理和版本信息。
 - `repository-samples.csv`：保存 10 个仓库的固定样本信息。
 - `repository-runs.csv`：以后逐次记录分析器运行数据；本任务只创建表头和字段说明，不填写伪造结果。
+- `finding-reviews.csv`：以后逐条保存每位复核者的独立判断和分歧处理，一次复核占一行；本任务只创建表头和字段说明，不填写伪造结果。
 - `ai-comparisons.csv`：以后记录 AI 对照实验；本任务只创建表头和字段说明，不调用 AI。
 - `user-trial-template.md`：以后由每位试用者复制填写；不得提前编造试用反馈。
 
@@ -178,8 +180,10 @@ sample_id,repository_url,commit_sha,primary_language,license,selection_group,siz
 `repository-runs.csv` 至少包含：
 
 ```text
-baseline_version,sample_id,run_number,commit_sha,analyzer_version,rule_set_version,started_at,duration_ms,exit_code,report_status,report_bytes,normalized_hash,total_findings,complete_evidence_count,absolute_path_leak,suspected_secret_leak,review_status,notes
+baseline_version,sample_id,run_number,commit_sha,analyzer_version,rule_set_version,report_protocol_version,started_at,duration_ms,timeout_ms,exit_code,run_outcome,failure_kind,report_status,report_bytes,normalized_hash,total_findings,complete_evidence_count,absolute_path_leak,suspected_secret_leak,stdout_leak,stderr_leak,stack_trace_leak,review_status,notes
 ```
+
+`run_outcome` 必须区分正常结束、命中公开限制的受控失败、崩溃和无限等待；失败类别、超时、五类泄露判定和“完整证据清单”的具体规则写在基线文档第 5.3 节。
 
 运行失败也必须保留一行记录。不得只记录成功结果。
 
@@ -198,14 +202,20 @@ NOT_APPLICABLE
 
 每条复核必须记录：
 
-- `sampleId`
-- `ruleId`
-- 相对文件路径和位置
-- 规则类型：仓库结构、文本或语法树
-- 复核结果
-- 是否可行动
-- 一句简短依据
-- 复核人和复核日期
+- 基线版本、稳定的发现唯一标识、`sampleId`、完整 commit SHA 和 `ruleId`。
+- 相对文件路径、起止行列位置和证据 SHA-256 指纹。
+- 规则类型：仓库结构、文本或语法树。
+- 每位复核者的匿名编号、复核结果、是否可行动、一句简短依据和带时区复核时间；一次复核占一行，行内不出现另一位复核者的结论。
+- 该行是否在不知晓另一位复核者结论的情况下填写。
+- 最终复核结果、最终是否可行动，以及存在分歧时的处理说明；最终结论单独占一行。
+
+`finding-reviews.csv` 表头：
+
+```text
+baseline_version,finding_id,review_row_id,sample_id,commit_sha,rule_id,relative_path,start_line,end_line,start_column,end_column,evidence_fingerprint,rule_type,review_stage,reviewer_id,blinded,verdict,actionable,rationale,reviewed_at,final_verdict,final_actionable,disagreement_resolution,notes
+```
+
+`relative_path` 必须是仓库内相对路径。`evidence_fingerprint` 使用规范化证据的 SHA-256，不保存源码正文。`review_stage` 为 `INDEPENDENT` 的行只填该位复核者的结论、可行动性、依据、时间和遮挡声明；普通发现只需要一人独立复核，影响 Java/C++ 共同协议、存在争议或首位复核者选择 `UNCERTAIN` 时必须有两行独立记录。`review_stage` 为 `FINAL` 的行只填最终结论、最终可行动性和分歧处理，`reviewer_id` 填 `BOTH` 或 `ARBITER`。只有所需复核完成后才能填写 `final_verdict` 和 `final_actionable`；两人判断不一致时必须填写 `disagreement_resolution`。
 
 不要把 `UNCERTAIN` 强行算作有效发现。存在分歧时保留两人的判断和最终决定，不删除原记录。
 
@@ -243,14 +253,17 @@ Skill 要求 AI 先读摘要、按需取证；证据不足时允许读取源文�
 `ai-comparisons.csv` 至少包含：
 
 ```text
-baseline_version,pair_id,sample_id,mode,model,reasoning_setting,prompt_version,run_number,started_at,duration_ms,input_tokens,output_tokens,token_source,confirmed_findings,false_positives,uncertain_findings,unsupported_claims,source_file_reads,completed,notes
+baseline_version,pair_id,sample_id,commit_sha,mode,model,reasoning_setting,prompt_version,run_number,cli_version,skill_version,analyzer_version,rule_set_version,report_protocol_version,repository_access,openpulse_report_provided,evidence_snippets_provided,started_at,duration_ms,input_tokens,output_tokens,token_source,confirmed_findings,false_positives,uncertain_findings,unsupported_claims,source_file_reads,review_refs,completed,notes
 ```
 
 要求：
 
 - Token 只记录 API 或工具实际提供的数值，不能自行估算。
 - 无法获得 Token 时填写 `NOT_AVAILABLE`，并依靠耗时和质量指标，不得写成 `0`。
-- AI 输出不直接作为“正确答案”；必须由人工根据仓库证据复核。
+- `repository_access`、`openpulse_report_provided`、`evidence_snippets_provided` 各自填 `YES` 或 `NO`，明确记录 AI 能否访问仓库文件、报告和证据片段。
+- 记录 `cli_version`、`skill_version`、`analyzer_version`、`rule_set_version` 和 `report_protocol_version`；对照组没有 Skill 时 `skill_version` 填 `NOT_APPLICABLE`。
+- AI 输出不直接作为“正确答案”；必须由人工根据仓库证据复核，并用 `review_refs` 把本行计数回溯到 `finding-reviews.csv` 的复核记录。
+- `unsupported_claims` 的计数口径和中位数口径写进基线文档第 8 节和第 10.3 节。
 - 不把完整 AI 对话、整段源码或含个人信息的内容提交到公开仓库，只保存必要统计和短摘要。
 
 ## 用户安装试用
@@ -269,7 +282,8 @@ baseline_version,pair_id,sample_id,mode,model,reasoning_setting,prompt_version,r
 `user-trial-template.md` 至少记录：
 
 - 匿名试用编号，不记录真实姓名、账号或联系方式。
-- 操作系统版本和架构。
+- `is_project_member` 和 `participated_in_installer_development`，两者都必须为 `NO`。
+- 操作系统版本和架构，以及缺少运行库或 DLL、PATH 未生效、权限不足、杀毒或 SmartScreen 拦截。
 - 开始时间、首次成功时间和总耗时。
 - 是否需要项目成员口头帮助。
 - 安装、运行、理解报告和卸载分别是否成功。
@@ -394,8 +408,8 @@ git diff --name-only
 
 1. `docs/validation/v0.2-validation-baseline.md` 明确记录 H1 至 H4、指标、门槛和停止条件。
 2. 10 个正式公开仓库已经按语言和成熟度要求选定，并固定完整 commit SHA。
-3. 仓库样本、运行、AI 对照和用户试用模板字段完整且没有伪造结果。
-4. 规范化规则、准确率公式和 AI 公平对照条件写清楚。
+3. 仓库样本、运行、发现复核、AI 对照和用户试用模板字段完整且没有伪造结果。
+4. 规范化规则、基于 `final_verdict` / `final_actionable` 的准确率与可行动率公式，以及 AI 公平对照条件写清楚。
 5. 两位负责人都评审样本和门槛，影响 C++/Java 边界的意见已解决。
 6. 所有引用可访问，CSV 格式可读取，`git diff --check` 通过。
 7. 改动只有文档和空白数据模板，没有产品代码、依赖或实验输出。
