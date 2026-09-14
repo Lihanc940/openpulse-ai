@@ -60,10 +60,15 @@ Java 负责人已完成：
 - `docs/tasks/06-java-github-repository-download.md`
 - `docs/tasks/07-java-analysis-persistence.md`
 
-当前共同任务：
+已完成的共同任务：
 
 - `docs/tasks/08-v02-validation-baseline.md`
-- Java 负责人主笔，C++ 负责人共同评审
-- 本任务只定义验证基线和记录模板，不修改产品代码，也不提前运行 AI 对照实验
+- v0.2 验证基线已经由 Java 与 C++ 负责人共同签字并激活
 
-完成验证基线评审后，再分别编写报告协议 v2 和 C++ CLI 分发任务书。
+当前共同任务：
+
+- `docs/tasks/09-report-protocol-v2-design.md`
+- Java 与 C++ 负责人共同设计报告协议 v2，协议 v1 在迁移完成前继续兼容
+- 本任务只冻结协议文档、JSON Schema、示例和迁移方案，不修改产品代码
+
+报告协议 v2 通过双方评审后，再分别编写 Java 双版本读取和 C++ CLI/报告实现任务书。
