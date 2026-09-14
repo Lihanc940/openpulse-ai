@@ -1,0 +1,100 @@
+{
+  "protocolVersion": "2.0",
+  "taskId": "task_fixture_success_001",
+  "analyzer": {
+    "name": "openpulse-analyzer",
+    "version": "0.2.0"
+  },
+  "ruleSet": {
+    "id": "openpulse-default",
+    "version": "0.2.0"
+  },
+  "status": "SUCCESS",
+  "reviewability": "COMPLETE",
+  "repository": {
+    "name": "fictional-workspace",
+    "root": ".",
+    "revision": "fixture-revision-001"
+  },
+  "summary": {
+    "totalFiles": 24,
+    "sourceFiles": 12,
+    "documentFiles": 3,
+    "configFiles": 4,
+    "testFiles": 5,
+    "totalLines": 2400,
+    "codeLines": 1680,
+    "commentLines": 360,
+    "blankLines": 360
+  },
+  "languages": [
+    {
+      "name": "C++",
+      "files": 5,
+      "lines": 720
+    },
+    {
+      "name": "Java",
+      "files": 7,
+      "lines": 960
+    }
+  ],
+  "structure": {
+    "hasReadme": true,
+    "hasLicense": false,
+    "hasContributing": true,
+    "hasChangelog": false,
+    "hasCi": true,
+    "hasTests": true,
+    "hasDockerfile": false,
+    "buildFiles": [
+      "CMakeLists.txt",
+      "pom.xml"
+    ]
+  },
+  "findings": [
+    {
+      "findingId": "sha256:b2435ebfd9d97636201cc988136190a1c7ade7b21ffb8d5bcb90ba77400c3711",
+      "ruleId": "LONG_FUNCTION",
+      "type": "SYNTAX_TREE",
+      "severity": "HIGH",
+      "scope": "FILE",
+      "location": {
+        "relativePath": "src/ExampleService.java",
+        "startLine": 40,
+        "startColumn": 3,
+        "endLine": 145,
+        "endColumn": 4
+      },
+      "message": "方法长度超过当前规则阈值。",
+      "evidence": {
+        "kind": "SYNTAX_METRIC",
+        "symbolKind": "METHOD",
+        "symbolName": "assembleReport",
+        "metric": "FUNCTION_LINES",
+        "observed": 106,
+        "threshold": 80
+      },
+      "remediation": "检查方法中的独立职责，并优先提取能够单独测试的步骤。"
+    },
+    {
+      "findingId": "sha256:b9dcda3c6f619d65163780c30df7792cc3baf402ba42e2adeab4d8031ac161a8",
+      "ruleId": "MISSING_LICENSE",
+      "type": "PROJECT_STRUCTURE",
+      "severity": "MEDIUM",
+      "scope": "REPOSITORY",
+      "location": null,
+      "message": "仓库缺少许可证文件。",
+      "evidence": {
+        "kind": "EXPECTED_PATHS_ABSENT",
+        "expectedPaths": [
+          "COPYING",
+          "LICENSE"
+        ]
+      },
+      "remediation": "确认项目的发布方式，并添加与项目授权意图一致的许可证文件。"
+    }
+  ],
+  "limitations": [],
+  "generatedAt": "2026-09-14T10:00:00+08:00"
+}
