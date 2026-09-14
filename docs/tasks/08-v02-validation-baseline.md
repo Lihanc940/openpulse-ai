@@ -183,7 +183,7 @@ sample_id,repository_url,commit_sha,primary_language,license,selection_group,siz
 baseline_version,sample_id,run_number,commit_sha,analyzer_version,rule_set_version,report_protocol_version,started_at,duration_ms,timeout_ms,exit_code,run_outcome,failure_kind,report_status,report_bytes,normalized_hash,total_findings,complete_evidence_count,absolute_path_leak,suspected_secret_leak,stdout_leak,stderr_leak,stack_trace_leak,review_status,notes
 ```
 
-`run_outcome` 必须区分正常结束、命中公开限制的受控失败、崩溃和无限等待；失败类别、超时、五类泄露判定和“完整证据清单”的具体规则写在基线文档第 5.3 节。
+`run_outcome` 必须区分正常结束、命中公开限制的受控失败、崩溃和无限等待。受控超时表示运行器或实验夹具在公开超时与终止宽限期内结束完整进程树并留下稳定记录；超过两段时间边界仍无法结束或落盘才算 `HANG`。`failure_kind` 必须覆盖 Java `AnalyzerExecutionFailure` 的全部现有取值；只有 CLI 或实验夹具产生、且无法映射到现有枚举的失败才能使用 `OTHER` 并在 `notes` 说明。失败类别、五类泄露判定和“完整证据清单”的具体规则写在基线文档第 5.3 节。
 
 运行失败也必须保留一行记录。不得只记录成功结果。
 
