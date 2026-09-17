@@ -64,11 +64,13 @@ Java 负责人已完成：
 
 - `docs/tasks/08-v02-validation-baseline.md`
 - v0.2 验证基线已经由 Java 与 C++ 负责人共同签字并激活
-
-当前共同任务：
-
 - `docs/tasks/09-report-protocol-v2-design.md`
-- Java 与 C++ 负责人共同设计报告协议 v2，协议 v1 在迁移完成前继续兼容
-- 本任务只冻结协议文档、JSON Schema、示例和迁移方案，不修改产品代码
+- 报告协议 v2 已完成 Java/C++ 双方评审并标记为 `ACCEPTED`
+- 协议 v1 在实现迁移和默认版本切换前继续兼容
 
-报告协议 v2 通过双方评审后，再分别编写 Java 双版本读取和 C++ CLI/报告实现任务书。
+当前并行任务：
+
+- `docs/tasks/10-java-analyzer-report-v2-reader.md`
+- `docs/tasks/11-cpp-analyzer-report-v2-output.md`
+- Java 负责人实现严格的 v1/v2 读取边界，C++ 负责人实现显式选择的 v2 输出
+- 两项任务都以已接受的协议为契约，可以并行开发；完成后再进行联合契约测试
