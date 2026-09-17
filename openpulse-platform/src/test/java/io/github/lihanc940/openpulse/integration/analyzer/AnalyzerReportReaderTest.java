@@ -24,7 +24,7 @@ class AnalyzerReportReaderTest {
 
     @Test
     void readsValidAnalyzerReport() {
-        AnalyzerReport report = reader.read(CONTRACTS_DIR.resolve("analyzer-report-v1.sample.json"));
+        AnalyzerReport report = reader.readV1(CONTRACTS_DIR.resolve("analyzer-report-v1.sample.json"));
 
         assertThat(report.protocolVersion()).isEqualTo("1.0");
         assertThat(report.taskId()).isEqualTo("task_demo_001");
@@ -41,7 +41,7 @@ class AnalyzerReportReaderTest {
 
     @Test
     void ignoresUnknownFieldsInCompatibleProtocolVersion() {
-        AnalyzerReport report = reader.read(CONTRACTS_DIR.resolve("analyzer-report-with-extra-fields.json"));
+        AnalyzerReport report = reader.readV1(CONTRACTS_DIR.resolve("analyzer-report-with-extra-fields.json"));
 
         assertThat(report.protocolVersion()).isEqualTo("1.0");
         assertThat(report.taskId()).isEqualTo("task_demo_extra_fields");
@@ -54,7 +54,7 @@ class AnalyzerReportReaderTest {
         assertThatThrownBy(() -> reader.read(missingReport))
                 .isInstanceOf(AnalyzerReportReadException.class)
                 .hasMessageContaining("does not exist")
-                .hasMessageContaining("missing-report.json");
+                .hasMessageNotContaining(missingReport.toAbsolutePath().toString());
     }
 
     @Test
@@ -73,7 +73,6 @@ class AnalyzerReportReaderTest {
 
         assertThatThrownBy(() -> reader.read(unsupportedVersionReport))
                 .isInstanceOf(AnalyzerReportReadException.class)
-                .hasMessageContaining("Unsupported analyzer report protocol version")
-                .hasMessageContaining("2.0");
+                .hasMessageContaining("Unsupported analyzer report protocol version");
     }
 }

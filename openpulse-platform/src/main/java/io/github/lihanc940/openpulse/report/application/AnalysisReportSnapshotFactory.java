@@ -2,12 +2,16 @@ package io.github.lihanc940.openpulse.report.application;
 
 import io.github.lihanc940.openpulse.analysis.domain.AnalysisTaskId;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
+import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerReportV2SchemaValidator;
+import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerReportV2SemanticValidator;
 import io.github.lihanc940.openpulse.integration.analyzer.model.RiskLevel;
 import io.github.lihanc940.openpulse.report.domain.AnalysisReportRecord;
 import io.github.lihanc940.openpulse.report.domain.AnalysisReportStatus;
 import io.github.lihanc940.openpulse.shared.persistence.PersistenceFailure;
 import io.github.lihanc940.openpulse.shared.persistence.PersistenceOperationException;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -55,9 +59,26 @@ public class AnalysisReportSnapshotFactory {
     private static final Set<String> DEPENDENCY_FIELDS = Set.of("nodes", "edges");
 
     private final ObjectMapper objectMapper;
+    private final AnalysisReportV2SnapshotMapper v2SnapshotMapper;
 
-    public AnalysisReportSnapshotFactory(ObjectMapper objectMapper) {
+    @Autowired
+    public AnalysisReportSnapshotFactory(
+            ObjectMapper objectMapper,
+            AnalysisReportV2SnapshotMapper v2SnapshotMapper
+    ) {
         this.objectMapper = objectMapper;
+        this.v2SnapshotMapper = v2SnapshotMapper;
+    }
+
+    AnalysisReportSnapshotFactory(ObjectMapper objectMapper) {
+        this(
+                objectMapper,
+                new AnalysisReportV2SnapshotMapper(
+                        objectMapper,
+                        new AnalyzerReportV2SchemaValidator(),
+                        new AnalyzerReportV2SemanticValidator(objectMapper)
+                )
+        );
     }
 
     public AnalysisReportRecord create(
@@ -95,8 +116,20 @@ public class AnalysisReportSnapshotFactory {
         return record;
     }
 
+    public AnalysisReportRecord create(
+            AnalysisTaskId platformTaskId,
+            AnalyzerReportV2 analyzerReport,
+            Clock clock
+    ) {
+        return v2SnapshotMapper.create(platformTaskId, analyzerReport, clock);
+    }
+
     public void validateSnapshot(AnalysisReportRecord report) {
         Objects.requireNonNull(report, "report must not be null");
+        if ("2.0".equals(report.protocolVersion())) {
+            v2SnapshotMapper.validateSnapshot(report);
+            return;
+        }
         Object decoded;
         try {
             decoded = objectMapper.readValue(report.reportJson(), Object.class);

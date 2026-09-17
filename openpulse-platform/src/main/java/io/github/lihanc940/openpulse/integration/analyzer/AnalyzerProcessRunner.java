@@ -133,7 +133,7 @@ public class AnalyzerProcessRunner {
         }
 
         try {
-            return reportReader.read(reportPath);
+            return reportReader.readV1(reportPath);
         } catch (AnalyzerReportReadException exception) {
             throw new AnalyzerExecutionException(
                     AnalyzerExecutionFailure.REPORT_INVALID,
