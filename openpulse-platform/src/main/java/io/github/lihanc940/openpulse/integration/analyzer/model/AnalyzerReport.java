@@ -21,7 +21,12 @@ public record AnalyzerReport(
         Dependencies dependencies,
         @JsonFormat(without = JsonFormat.Feature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
         OffsetDateTime generatedAt
-) {
+) implements AnalyzerReportDocument {
+
+    @Override
+    public String reportStatus() {
+        return status == null ? null : status.name();
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Repository(String path, String name) {
