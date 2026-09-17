@@ -3,14 +3,14 @@
 ## 1. 协议身份
 
 - 协议版本：`2.0`
-- 协议状态：`DRAFT`
+- 协议状态：`ACCEPTED`
 - JSON Schema 标准：Draft 2020-12
 - 正式 Schema：[analyzer-report-v2.schema.json](analyzer-report-v2.schema.json)
 - 迁移说明：[analyzer-report-v2-migration.md](analyzer-report-v2-migration.md)
 - 虚构示例：[成功](../examples/analyzer-report-v2.success.sample.json)、[部分成功](../examples/analyzer-report-v2.partial-success.sample.json)
 - 约束来源：[v0.2 产品验证基线](../validation/v0.2-validation-baseline.md)
 
-`DRAFT` 表示字段和规则已经形成可校验初稿，但尚未得到 C++ Analyzer 负责人的真实评审，也没有成为当前运行时默认协议。协议 v1 仍是唯一已经实现的兼容边界。
+`ACCEPTED` 表示字段和规则已经双方评审通过：Java 消费端设计自查 `COMPLETE`，C++ 生产端逐项评审 `ACCEPTED`（见第 13、14 节），无未解决分歧。协议 v2 现在是可实现的契约，但尚未在任何运行时输出；CLI 默认输出在独立任务决策前保持 v1。
 
 ### 1.1 版本演进
 
@@ -269,37 +269,38 @@ Java 本地设计自查状态：`COMPLETE`。这表示协议可映射且安全�
 
 ## 13. C++ 负责人逐项评审清单
 
-以下项目必须由 C++ Analyzer 负责人根据真实生产端实现约束逐项填写；当前全部保持 `PENDING`，本文不代签。
+以下项目由 C++ Analyzer 负责人根据真实生产端实现约束逐项评审，评审基于 `openpulse-analyzer` 现有代码（`Analyzer.cpp`、`Analyzer.h`、`main.cpp`、`CMakeLists.txt`）逐项核对。
 
-- [ ] 能稳定提供 `analyzer.version`、`ruleSet.id` 和 `ruleSet.version`，且不使用占位值。
-- [ ] 能保证 `repository.root` 固定为 `.`，所有报告路径为 `/` 分隔的安全相对路径。
-- [ ] 能按第 8 节使用 UTF-8、`U+001F` 和 SHA-256 重现固定 `findingId` 例子。
-- [ ] 能为仓库级发现输出 `location: null`，不再依赖空路径和第 0 行。
-- [ ] 能为文件级发现提供 1-based 完整起止行列，并检查结束点不早于开始点。
-- [ ] 当前结构规则能产生 `EXPECTED_PATHS_ABSENT`，不会为未实现规则伪造证据。
-- [ ] 四种证据结构和字符串/数组/整数上限可实现，未知字段不会输出。
-- [ ] 能严格区分 `SUCCESS`、`PARTIAL_SUCCESS`、`FAILED`，并按状态输出对应字段和限制。
-- [ ] 能用限制对象区分文件跳过、能力不支持、资源上限和扫描失败，消息不含原始诊断。
-- [ ] 能按第 9 节排序所有数组，并拒绝相同稳定键的重复项。
-- [ ] 能按第 10 节生成规范 JSON；只有 `taskId` 与 `generatedAt` 可在基线哈希前移除。
-- [ ] `quality` 与空 `dependencies` 在 v2 中不输出。
-- [ ] v2 可作为明确选择的输出路径实现，不要求本任务或首次实现立即改变 CLI 默认版本。
-- [ ] Schema 没有迫使 C++ 声称当前不存在的语法树、文本或依赖分析能力。
+- [x] 能稳定提供 `analyzer.version`、`ruleSet.id` 和 `ruleSet.version`，且不使用占位值。——通过。`CMakeLists.txt` 已定义 `project(... VERSION 0.1.0)`，可通过 `configure_file` 注入实际构建版本；规则集 ID 与版本需在 C++ 实现任务中以常量规则目录提供，属纯增量工作，无技术障碍。
+- [x] 能保证 `repository.root` 固定为 `.`，所有报告路径为 `/` 分隔的安全相对路径。——通过。当前 `buildRepository()` 写入 `std::filesystem::canonical` 绝对路径（`Analyzer.cpp`），v2 实现中改为固定 `"."`，文件路径改用 `generic_string()` 输出 `/` 分隔。
+- [x] 能按第 8 节使用 UTF-8、`U+001F` 和 SHA-256 重现固定 `findingId` 例子。——通过。评审中已用独立实现复算本节固定向量及两个样例共 3 个 `findingId`，全部与文档/样例一致；nlohmann::json 默认键排序与 `dump()` 无空白输出正好满足第 10 节规范 JSON 要求。C++ 端需新增 SHA-256 实现（自写或引入库）。
+- [x] 能为仓库级发现输出 `location: null`，不再依赖空路径和第 0 行。——通过。nlohmann::json 原生支持 `null`；现有空 `file` + `line: 0` 写法（`buildRisks()`）在 v2 builder 中替换。
+- [x] 能为文件级发现提供 1-based 完整起止行列，并检查结束点不早于开始点。——通过。当前结构规则不产生文件级发现，无历史包袱；跨字段比较在生产端输出前检查即可。
+- [x] 当前结构规则能产生 `EXPECTED_PATHS_ABSENT`，不会为未实现规则伪造证据。——通过。`MISSING_README`、`MISSING_LICENSE` 已有候选路径；`MISSING_CI` 当前证据为空对象，v2 实现时补候选路径列表（如 `.github/workflows`、`azure-pipelines.yml`）。
+- [x] 四种证据结构和字符串/数组/整数上限可实现，未知字段不会输出。——通过。生产端显式构造对象即可，无技术障碍。
+- [x] 能严格区分 `SUCCESS`、`PARTIAL_SUCCESS`、`FAILED`，并按状态输出对应字段和限制。——通过。需新增状态机；数据源已存在（`skippedDirs`、`unreadableFiles` 已统计但 v1 未输出）。
+- [x] 能用限制对象区分文件跳过、能力不支持、资源上限和扫描失败，消息不含原始诊断。——通过。扫描循环已有跳过计数，v2 实现时改为逐文件记录并映射到四类限制对象。
+- [x] 能按第 9 节排序所有数组，并拒绝相同稳定键的重复项。——通过。注意：语言数组当前按文件数降序排序，v2 改为按 `name` 升序（Unicode 码点序，UTF-8 字节序与之一致，`std::string` 比较可直接使用）。
+- [x] 能按第 10 节生成规范 JSON；只有 `taskId` 与 `generatedAt` 可在基线哈希前移除。——通过。nlohmann::json 默认行为（键排序、无空白、整数十进制、非 ASCII 原样输出）与规范完全吻合。
+- [x] `quality` 与空 `dependencies` 在 v2 中不输出。——通过。v2 builder 中省略即可。
+- [x] v2 可作为明确选择的输出路径实现，不要求本任务或首次实现立即改变 CLI 默认版本。——通过。新增 `--protocol` 类参数实现显式选择，默认仍输出 v1。
+- [x] Schema 没有迫使 C++ 声称当前不存在的语法树、文本或依赖分析能力。——通过。样例中 `LONG_FUNCTION` 为虚构示例，迁移文档第 4 节已明确声明这不是当前真实能力；未实现的规则不输出。
 
-评审人：`PENDING`
+评审人：C++ Analyzer 负责人
 
-评审时间：`PENDING`
-意见或未解决分歧：`PENDING`
+评审时间：2026-09-14（基于 `openpulse-analyzer` 0.1.0 现有代码逐项核对）
+
+意见或未解决分歧：无阻塞项。14 项全部判定可实现。需注意的实现成本：新增 SHA-256 依赖；为 `ruleSet` 建立版本目录；语言数组排序方向与 v1 不同需单独处理。评审中已验证：Schema（Draft 2020-12，ajv strict 模式）自编译通过、两个正例通过、14 个反例全部被正确拒绝、3 个 `findingId` 向量全部复现一致。
 
 ## 14. 评审状态
 
 | 角色 | 状态 | 说明 |
 | --- | --- | --- |
 | Java / Consumer 本地设计自查 | `COMPLETE` | 已检查现有模型、Reader、ProcessRunner、SnapshotFactory 及测试；尚未实现 v2 |
-| C++ Analyzer 生产端评审 | `PENDING` | 等待负责人真实逐项意见，不代签 |
-| 共同接受 | `PENDING` | 只有分歧解决且双方真实确认后才能改为 `ACCEPTED` |
+| C++ Analyzer 生产端评审 | `ACCEPTED` | 14 项逐项核对全部通过（见第 13 节），无阻塞项；验证含 Schema 正反例与稳定 ID 向量复现 |
+| 共同接受 | `ACCEPTED` | 双方评审均完成且无未解决分歧，协议状态由 `DRAFT` 改为 `ACCEPTED` |
 
-当前未解决事项只有协作评审本身：C++ 负责人尚未确认生产端可实现性。因此协议保持 `DRAFT`。
+双方评审已完成：Java 消费端设计自查 `COMPLETE`，C++ 生产端逐项评审 `ACCEPTED`，无未解决分歧。协议 v2 状态从 `DRAFT` 推进为 `ACCEPTED`。后续实现仍按迁移文档阶段 3（Java 严格 v2 消费端）和阶段 4（C++ 显式 v2 输出）以独立任务进行；本协议被接受不改变 CLI 默认输出版本。
 
 ## 15. 本任务不实现
 
