@@ -1,0 +1,887 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openpulse.dev/schemas/analyzer-report-v2.schema.json",
+  "title": "OpenPulse Analyzer Report Protocol 2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "taskId",
+    "analyzer",
+    "ruleSet",
+    "status",
+    "reviewability",
+    "repository",
+    "findings",
+    "limitations",
+    "generatedAt"
+  ],
+  "properties": {
+    "protocolVersion": {
+      "const": "2.0"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "analyzer": {
+      "$ref": "#/$defs/analyzerIdentity"
+    },
+    "ruleSet": {
+      "$ref": "#/$defs/ruleSetIdentity"
+    },
+    "status": {
+      "enum": [
+        "SUCCESS",
+        "PARTIAL_SUCCESS",
+        "FAILED"
+      ]
+    },
+    "reviewability": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "NOT_USABLE"
+      ]
+    },
+    "repository": {
+      "$ref": "#/$defs/repository"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "languages": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/language"
+      }
+    },
+    "structure": {
+      "$ref": "#/$defs/structure"
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/limitation"
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "SUCCESS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "summary",
+          "languages",
+          "structure"
+        ],
+        "properties": {
+          "summary": true,
+          "languages": true,
+          "structure": true,
+          "reviewability": {
+            "const": "COMPLETE"
+          },
+          "limitations": {
+            "type": "array",
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PARTIAL_SUCCESS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "summary",
+          "languages",
+          "structure"
+        ],
+        "properties": {
+          "summary": true,
+          "languages": true,
+          "structure": true,
+          "reviewability": {
+            "const": "PARTIAL"
+          },
+          "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "not": {
+              "contains": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "SCAN_FAILED"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "FAILED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "summary": false,
+          "languages": false,
+          "structure": false,
+          "reviewability": {
+            "const": "NOT_USABLE"
+          },
+          "findings": {
+            "type": "array",
+            "maxItems": 0
+          },
+          "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "contains": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "SCAN_FAILED"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "positivePosition": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "safeText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?![A-Za-z][A-Za-z0-9+.-]*:)(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))[^/\\\\:\\u0000-\\u001F\\u007F]+(?:/[^/\\\\:\\u0000-\\u001F\\u007F]+)*$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 64,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "analyzerIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "const": "openpulse-analyzer"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      }
+    },
+    "ruleSetIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "root"
+      ],
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 128
+            }
+          ]
+        },
+        "root": {
+          "const": "."
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalFiles",
+        "sourceFiles",
+        "documentFiles",
+        "configFiles",
+        "testFiles",
+        "totalLines",
+        "codeLines",
+        "commentLines",
+        "blankLines"
+      ],
+      "properties": {
+        "totalFiles": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "sourceFiles": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "documentFiles": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "configFiles": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "testFiles": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "totalLines": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "codeLines": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "commentLines": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "blankLines": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "language": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "files",
+        "lines"
+      ],
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 64
+            }
+          ]
+        },
+        "files": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "lines": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hasReadme",
+        "hasLicense",
+        "hasContributing",
+        "hasChangelog",
+        "hasCi",
+        "hasTests",
+        "hasDockerfile",
+        "buildFiles"
+      ],
+      "properties": {
+        "hasReadme": {
+          "type": "boolean"
+        },
+        "hasLicense": {
+          "type": "boolean"
+        },
+        "hasContributing": {
+          "type": "boolean"
+        },
+        "hasChangelog": {
+          "type": "boolean"
+        },
+        "hasCi": {
+          "type": "boolean"
+        },
+        "hasTests": {
+          "type": "boolean"
+        },
+        "hasDockerfile": {
+          "type": "boolean"
+        },
+        "buildFiles": {
+          "type": "array",
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relativePath",
+        "startLine",
+        "startColumn",
+        "endLine",
+        "endColumn"
+      ],
+      "properties": {
+        "relativePath": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "startLine": {
+          "$ref": "#/$defs/positivePosition"
+        },
+        "startColumn": {
+          "$ref": "#/$defs/positivePosition"
+        },
+        "endLine": {
+          "$ref": "#/$defs/positivePosition"
+        },
+        "endColumn": {
+          "$ref": "#/$defs/positivePosition"
+        }
+      }
+    },
+    "expectedPathsAbsentEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "expectedPaths"
+      ],
+      "properties": {
+        "kind": {
+          "const": "EXPECTED_PATHS_ABSENT"
+        },
+        "expectedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        }
+      }
+    },
+    "fileMetricEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "metric",
+        "observed",
+        "threshold"
+      ],
+      "properties": {
+        "kind": {
+          "const": "FILE_METRIC"
+        },
+        "metric": {
+          "enum": [
+            "BYTE_COUNT",
+            "LINE_COUNT"
+          ]
+        },
+        "observed": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "threshold": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "textMatchEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "matchKind",
+        "occurrences",
+        "threshold"
+      ],
+      "properties": {
+        "kind": {
+          "const": "TEXT_MATCH"
+        },
+        "matchKind": {
+          "enum": [
+            "DANGEROUS_FUNCTION",
+            "FIXME_MARKER",
+            "TODO_MARKER"
+          ]
+        },
+        "occurrences": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "threshold": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "syntaxMetricEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "symbolKind",
+        "symbolName",
+        "metric",
+        "observed",
+        "threshold"
+      ],
+      "properties": {
+        "kind": {
+          "const": "SYNTAX_METRIC"
+        },
+        "symbolKind": {
+          "enum": [
+            "FUNCTION",
+            "METHOD"
+          ]
+        },
+        "symbolName": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 128
+            }
+          ]
+        },
+        "metric": {
+          "enum": [
+            "FUNCTION_LINES",
+            "MAX_NESTING_DEPTH",
+            "PARAMETER_COUNT"
+          ]
+        },
+        "observed": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "threshold": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "evidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/expectedPathsAbsentEvidence"
+        },
+        {
+          "$ref": "#/$defs/fileMetricEvidence"
+        },
+        {
+          "$ref": "#/$defs/textMatchEvidence"
+        },
+        {
+          "$ref": "#/$defs/syntaxMetricEvidence"
+        }
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findingId",
+        "ruleId",
+        "type",
+        "severity",
+        "scope",
+        "location",
+        "message",
+        "evidence",
+        "remediation"
+      ],
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "ruleId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$"
+        },
+        "type": {
+          "enum": [
+            "PROJECT_STRUCTURE",
+            "TEXT",
+            "SYNTAX_TREE"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "REPOSITORY",
+            "FILE"
+          ]
+        },
+        "location": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/location"
+            }
+          ]
+        },
+        "message": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 300
+            }
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "remediation": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 500
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "REPOSITORY"
+              }
+            },
+            "required": [
+              "scope"
+            ]
+          },
+          "then": {
+            "properties": {
+              "location": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "FILE"
+              }
+            },
+            "required": [
+              "scope"
+            ]
+          },
+          "then": {
+            "properties": {
+              "location": {
+                "$ref": "#/$defs/location"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "fileSkippedLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "scope",
+        "relativePath",
+        "reason",
+        "message"
+      ],
+      "properties": {
+        "kind": {
+          "const": "FILE_SKIPPED"
+        },
+        "scope": {
+          "const": "FILE"
+        },
+        "relativePath": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "reason": {
+          "enum": [
+            "FILE_TOO_LARGE",
+            "PERMISSION_DENIED",
+            "READ_ERROR",
+            "UNSUPPORTED_ENCODING",
+            "UNSUPPORTED_FILE_TYPE"
+          ]
+        },
+        "message": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 300
+            }
+          ]
+        }
+      }
+    },
+    "unsupportedCapabilityLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "scope",
+        "capabilityType",
+        "capability",
+        "message"
+      ],
+      "properties": {
+        "kind": {
+          "const": "UNSUPPORTED_CAPABILITY"
+        },
+        "scope": {
+          "const": "REPOSITORY"
+        },
+        "capabilityType": {
+          "enum": [
+            "LANGUAGE",
+            "RULE_TYPE"
+          ]
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 +#._-]*$"
+        },
+        "message": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 300
+            }
+          ]
+        }
+      }
+    },
+    "resourceLimitLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "scope",
+        "limitType",
+        "configuredLimit",
+        "observedAtLeast",
+        "message"
+      ],
+      "properties": {
+        "kind": {
+          "const": "RESOURCE_LIMIT_REACHED"
+        },
+        "scope": {
+          "const": "REPOSITORY"
+        },
+        "limitType": {
+          "enum": [
+            "BYTE_COUNT",
+            "DURATION_MS",
+            "FILE_COUNT"
+          ]
+        },
+        "configuredLimit": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "observedAtLeast": {
+          "$ref": "#/$defs/safeInteger"
+        },
+        "message": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 300
+            }
+          ]
+        }
+      }
+    },
+    "scanFailedLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "scope",
+        "reason",
+        "message"
+      ],
+      "properties": {
+        "kind": {
+          "const": "SCAN_FAILED"
+        },
+        "scope": {
+          "const": "REPOSITORY"
+        },
+        "reason": {
+          "enum": [
+            "INTERNAL_ERROR",
+            "TRAVERSAL_ERROR"
+          ]
+        },
+        "message": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/safeText"
+            },
+            {
+              "type": "string",
+              "maxLength": 300
+            }
+          ]
+        }
+      }
+    },
+    "limitation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/fileSkippedLimitation"
+        },
+        {
+          "$ref": "#/$defs/resourceLimitLimitation"
+        },
+        {
+          "$ref": "#/$defs/scanFailedLimitation"
+        },
+        {
+          "$ref": "#/$defs/unsupportedCapabilityLimitation"
+        }
+      ]
+    }
+  }
+}

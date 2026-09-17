@@ -1,0 +1,90 @@
+{
+  "protocolVersion": "2.0",
+  "taskId": "task_fixture_partial_001",
+  "analyzer": {
+    "name": "openpulse-analyzer",
+    "version": "0.2.0"
+  },
+  "ruleSet": {
+    "id": "openpulse-default",
+    "version": "0.2.0"
+  },
+  "status": "PARTIAL_SUCCESS",
+  "reviewability": "PARTIAL",
+  "repository": {
+    "name": "fictional-mixed-project",
+    "root": "."
+  },
+  "summary": {
+    "totalFiles": 18,
+    "sourceFiles": 9,
+    "documentFiles": 2,
+    "configFiles": 3,
+    "testFiles": 2,
+    "totalLines": 1320,
+    "codeLines": 900,
+    "commentLines": 210,
+    "blankLines": 210
+  },
+  "languages": [
+    {
+      "name": "Java",
+      "files": 6,
+      "lines": 740
+    },
+    {
+      "name": "Rust",
+      "files": 3,
+      "lines": 160
+    }
+  ],
+  "structure": {
+    "hasReadme": true,
+    "hasLicense": true,
+    "hasContributing": false,
+    "hasChangelog": false,
+    "hasCi": false,
+    "hasTests": true,
+    "hasDockerfile": false,
+    "buildFiles": [
+      "Cargo.toml",
+      "pom.xml"
+    ]
+  },
+  "findings": [
+    {
+      "findingId": "sha256:1c090a45b827a6ed23196817880ef2a05968acf5280a0158a7b67ab0ff98eff7",
+      "ruleId": "MISSING_CI",
+      "type": "PROJECT_STRUCTURE",
+      "severity": "LOW",
+      "scope": "REPOSITORY",
+      "location": null,
+      "message": "仓库缺少已识别的持续集成配置。",
+      "evidence": {
+        "kind": "EXPECTED_PATHS_ABSENT",
+        "expectedPaths": [
+          ".github/workflows",
+          "azure-pipelines.yml"
+        ]
+      },
+      "remediation": "根据项目构建方式选择持续集成服务，并添加最小构建与测试流程。"
+    }
+  ],
+  "limitations": [
+    {
+      "kind": "FILE_SKIPPED",
+      "scope": "FILE",
+      "relativePath": "assets/generated-data.bin",
+      "reason": "UNSUPPORTED_FILE_TYPE",
+      "message": "该文件类型不在文本扫描范围内。"
+    },
+    {
+      "kind": "UNSUPPORTED_CAPABILITY",
+      "scope": "REPOSITORY",
+      "capabilityType": "LANGUAGE",
+      "capability": "Rust",
+      "message": "该语言仅参与仓库级事实统计，不执行语法树规则。"
+    }
+  ],
+  "generatedAt": "2026-09-14T10:05:00+08:00"
+}
