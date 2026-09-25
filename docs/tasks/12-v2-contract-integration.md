@@ -39,7 +39,7 @@
 
 ## 开始门槛
 
-任务 12 只有在以下条件全部满足后才能开始执行：
+任务 12 只有在以下条件全部满足后才能开始执行（先阅读并钉死下方「联合基线：开工前必须钉死」一节，再进入这些门槛）：
 
 1. 从包含任务 10 和任务 11 的最新 `main` 创建任务分支，记录起始 commit。
 2. 任务 11 已提供真实 `--protocol 2.0` 输出、默认 v1 回归、稳定 ID、排序、状态与限制测试。
@@ -56,6 +56,50 @@
 5. `docs/tasks/11-cpp-analyzer-report-v2-output.md`
 6. C++ v2 builder、CLI 和相关测试
 7. Java `AnalyzerReportReader`、`AnalyzerReportV2SemanticValidator`、`AnalysisReportV2SnapshotMapper` 和相关测试
+
+## 联合基线：开工前必须钉死
+
+以下五项在任务 12 执行前必须由 Java 与 C++ 负责人共同确认并写入起始记录。本准备提交只钉住基线要求，不代替任务 11 的实现，也不擅自决定协议字段。
+
+### 1. 生产端身份
+
+- `analyzer.name` 固定为 `openpulse-analyzer`。
+- `analyzer.version` 必须来自 `CMakeLists.txt` 的 `project(openpulse-analyzer VERSION ...)`（当前为 `0.1.0`），不得复制 `docs/examples/*.sample.json` 里的 `0.2.0`。
+- `ruleSet.id` 固定为 `openpulse-default`。
+- `ruleSet.version` 固定为 `0.2.0`，与已接受的示例和 Java 规则目录保持一致。
+
+> 约束：Java `AnalyzerReportV2SemanticValidator` 目前只识别 `("openpulse-default", "0.2.0")` 这一个规则目录键。任务 11 若使用其他键或版本，Java 会以 `SEMANTIC_VIOLATION` 拒绝整份报告，而这不是契约缺陷；修复需要改动 Java 产品代码，超出本任务“原则上不修改产品代码”的范围。因此这里钉死上述值，任何改键/改版需求先回主线另立任务。
+
+### 2. SUCCESS 与限制策略
+
+- `complete` 与 `missing-structure` 两个目录 fixture 的目标状态都是 `SUCCESS + COMPLETE`，`limitations` 为空；`findings` 允许为空或有发现。
+- 生产者不得仅因“尚未实现语法树 / 文本规则”就为每种语言生成 `UNSUPPORTED_CAPABILITY`。本任务的计划扫描范围是“仓库统计 + 三条结构规则”，语法树与文本规则不在范围内。
+- `UNSUPPORTED_CAPABILITY` 只用于：生产者对某语言/规则类型承诺了分析能力，但本次明确没有执行。
+- 若任务 11 的真实实现按协议要求必须生成这类限制，导致无法达到 `SUCCESS`，先回主线按协议分歧处理（`BLOCKED`），不得改 Schema、改产品代码或改 fixture 来迁就。
+
+### 3. 三条结构的固定向量
+
+任务 11 必须在回主线报告中发布当前三条规则的固定向量，格式与协议第 8 节一致。任务 12 开工前必须确认下表第三列全部有真实 SHA-256，且由 C++ 生产构造逻辑复算得出，不得手工改写：
+
+| ruleId | expectedPaths（码点升序、去重） | 固定 `findingId`（`sha256:` + 64 位小写十六进制） |
+| --- | --- | --- |
+| `MISSING_README` | 当前全仓库未发布，任务 11 必须补齐 | 同上，任务 11 必须补齐 |
+| `MISSING_LICENSE` | `["COPYING","LICENSE"]` | `sha256:b9dcda3c6f619d65163780c30df7792cc3baf402ba42e2adeab4d8031ac161a8` |
+| `MISSING_CI` | `[".github/workflows","azure-pipelines.yml"]` | `sha256:1c090a45b827a6ed23196817880ef2a05968acf5280a0158a7b67ab0ff98eff7` |
+
+`MISSING_CI` 一行的值以已接受的示例为准，任务 11 按实际规则目录复算确认；`MISSING_README` 是唯一在协议与示例中都没有发布向量的规则，属于任务 11 报告必须补齐的缺口。
+
+### 4. Java 联合测试的交接接口
+
+- 脚本把 C++ 生成的报告目录通过明确的系统属性交给 Java 联合测试，固定为 `-Dopenpulse.contract.report.dir=<临时目录>`（命名可在实现阶段由双方一致调整，但必须在脚本与测试里唯一对应）。
+- 该属性缺失时，依赖 C++ 真实输出的用例（C03–C06、C08）必须显式 `SKIPPED` 并单独计数，不得当作通过，也不得让 `mvn clean verify` 变红。
+- 不依赖外部输出的断言（Schema 反例、语义反例、白名单、固定向量复算）保持默认运行。
+
+### 5. 规范化 golden 与反例输入
+
+- `expected/*.v2.normalized.json` 已移除 `taskId`/`generatedAt`，不能直接作为 Java `AnalyzerReportReader` 或 N01–N10 变异器的输入（Schema 把 `taskId` 列为必填）。
+- Java 用例与反例变异一律基于原始 C++ 输出（含固定 `taskId`/`generatedAt`）。若要让 Java 用例在无 C++ 环境下自包含运行，需额外提交一份固定 `taskId`/`generatedAt` 的 raw v2 报告作为受控输入。
+- `cases.json` 中的预期哈希与 `expected/*.json` 不一致时判定失败；以 golden 为权威、`cases.json` 为冗余校验，禁止用实际输出反向覆盖 golden。
 
 ## 联合 fixture 总体设计
 
