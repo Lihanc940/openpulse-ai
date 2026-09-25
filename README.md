@@ -59,6 +59,8 @@ Java 负责人已完成：
 - `docs/tasks/05-java-github-repository-metadata.md`
 - `docs/tasks/06-java-github-repository-download.md`
 - `docs/tasks/07-java-analysis-persistence.md`
+- `docs/tasks/10-java-analyzer-report-v2-reader.md`
+- Java 协议 v2 Reader 已通过 PR #24 合并，`main` 对应提交为 `897964c`
 
 已完成的共同任务：
 
@@ -68,9 +70,13 @@ Java 负责人已完成：
 - 报告协议 v2 已完成 Java/C++ 双方评审并标记为 `ACCEPTED`
 - 协议 v1 在实现迁移和默认版本切换前继续兼容
 
-当前并行任务：
+当前开发任务：
 
-- `docs/tasks/10-java-analyzer-report-v2-reader.md`
 - `docs/tasks/11-cpp-analyzer-report-v2-output.md`
-- Java 负责人实现严格的 v1/v2 读取边界，C++ 负责人实现显式选择的 v2 输出
-- 两项任务都以已接受的协议为契约，可以并行开发；完成后再进行联合契约测试
+- C++ 负责人正在实现显式选择的 v2 输出；协议 v1 仍是默认输出
+
+下一项共同任务已完成任务书准备，但尚未开始执行：
+
+- `docs/tasks/12-v2-contract-integration.md`
+- 任务 11 合并后，Java 与 C++ 负责人将使用同一组虚构 fixture 完成“C++ 生成 -> Schema 验证 -> Java 读取”的联合契约验收
+- 当前没有联合 fixture 结果，也没有授权切换默认协议、移除 v1 或填写 v0.2 实验结果
