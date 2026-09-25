@@ -35,6 +35,23 @@ const std::set<std::string> SOURCE_EXTS = {
     ".lua", ".r", ".pl", ".pm", ".dart", ".zig", ".nim"
 };
 
+// Only programming languages appear in the report's languages array.
+// Markup / config / data languages (Markdown, JSON, YAML, etc.) are counted
+// in summary.*Files but are not "languages" in the protocol sense.
+const std::set<std::string> PROGRAMMING_LANGUAGES = {
+    "C", "C++", "C/C++ Header",
+    "Java", "Kotlin", "Scala",
+    "Python", "Cython",
+    "JavaScript", "TypeScript",
+    "Go", "Rust", "Ruby", "PHP",
+    "Swift", "C#", "F#",
+    "Vue", "Svelte",
+    "CSS", "SCSS", "Less",
+    "SQL",
+    "Shell", "PowerShell", "Batch",
+    "Lua", "R", "Perl", "Dart", "Zig", "Nim"
+};
+
 std::string lowerExt(const std::filesystem::path& path) {
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
@@ -91,28 +108,234 @@ bool isHashExt(const std::string& ext) {
     return EXTS.count(ext) > 0;
 }
 
+// Records a skipped entry with a '/'-separated path relative to the scan
+// root. Entries whose relative path cannot be proven to stay inside the
+// root are never named in a report.
+void recordSkip(ScanFacts& facts, const std::filesystem::path& root,
+                const std::filesystem::path& path, const char* reason) {
+    std::string rel = path.lexically_relative(root).generic_string();
+    if (rel.empty() || rel == "." || rel == ".." || rel.rfind("../", 0) == 0) {
+        return;
+    }
+    facts.skippedFiles.push_back({rel, reason});
+}
+
 } // anonymous namespace
+
+std::vector<LangStats> Analyzer::filterProgrammingLanguages(std::vector<LangStats> langs) {
+    std::vector<LangStats> result;
+    for (auto& ls : langs) {
+        if (PROGRAMMING_LANGUAGES.count(ls.name) > 0) {
+            result.push_back(std::move(ls));
+        }
+    }
+    return result;
+}
 
 // --- Public interface ---
 
 nlohmann::json Analyzer::generateReport(const AnalyzerConfig& config) const {
-    FileStats stats = scanDirectory(config.repoPath);
-    std::vector<LangStats> langs = detectLanguages(config.repoPath);
-    StructureCheck structure = checkStructure(config.repoPath);
+    ScanFacts facts = collectFacts(config.repoPath);
+    std::vector<LangStats> langs = filterProgrammingLanguages(facts.languages);
+    // v1 order: file count descending (unchanged legacy behavior)
+    std::sort(langs.begin(), langs.end(),
+              [](const LangStats& a, const LangStats& b) { return a.files > b.files; });
 
     return {
         {"protocolVersion", "1.0"},
         {"taskId",          generateTaskId()},
         {"status",          "SUCCESS"},
         {"repository",      buildRepository(config.repoPath)},
-        {"summary",         buildSummary(stats)},
+        {"summary",         buildSummary(facts.stats)},
         {"languages",       buildLanguages(langs)},
-        {"structure",       buildStructure(structure)},
+        {"structure",       buildStructure(facts.structure)},
         {"quality",         buildQuality()},
-        {"risks",           buildRisks(structure)},
+        {"risks",           buildRisks(facts.structure)},
         {"dependencies",    buildDependencies()},
         {"generatedAt",     generateTimestamp()}
     };
+}
+
+// --- Fact collection (single shared traversal) ---
+
+ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
+    ScanFacts facts;
+    std::error_code ec;
+
+    // The scan root itself must be iterable; otherwise no facts exist.
+    {
+        std::filesystem::directory_iterator probe(root, ec);
+        if (ec) {
+            facts.traversalFailed = true;
+            return facts;
+        }
+    }
+
+    std::map<std::string, LangStats> langMap;
+
+    std::filesystem::recursive_directory_iterator it(root, ec);
+    const std::filesystem::recursive_directory_iterator end;
+    if (ec) {
+        facts.traversalFailed = true;
+        return facts;
+    }
+
+    while (it != end) {
+        const std::filesystem::path entryPath = it->path();
+        std::error_code typeEc;
+        const bool isDir = it->is_directory(typeEc);
+        const bool isReg = typeEc ? false : it->is_regular_file(typeEc);
+
+        if (!typeEc && isDir && shouldSkipDir(entryPath)) {
+            it.disable_recursion_pending();
+            facts.stats.skippedDirs++;
+        } else if (typeEc) {
+            recordSkip(facts, root, entryPath, "PERMISSION_DENIED");
+        } else if (isReg) {
+            std::string ext = lowerExt(entryPath);
+            facts.stats.totalFiles++;
+
+            if (isSourceFile(ext)) {
+                facts.stats.sourceFiles++;
+            } else if (isDocumentFile(ext)) {
+                facts.stats.documentFiles++;
+            } else if (isConfigFile(ext)) {
+                facts.stats.configFiles++;
+            }
+
+            if (isTestFile(entryPath)) {
+                facts.stats.testFiles++;
+            }
+
+            std::string lang = languageFromExt(ext);
+            auto& ls = langMap[lang];
+            ls.name = lang;
+            ls.files++;
+
+            // Count lines with comment-style detection
+            std::ifstream file(entryPath.string());
+            if (file.is_open()) {
+                std::string line;
+                bool inBlock = false;  // inside /* */ block comment
+                while (std::getline(file, line)) {
+                    facts.stats.totalLines++;
+                    ls.lines++;
+
+                    // Trim leading whitespace
+                    size_t start = line.find_first_not_of(" \t\r");
+
+                    if (start == std::string::npos) {
+                        facts.stats.blankLines++;
+                        continue;
+                    }
+
+                    // Check for # comment first (script / config languages)
+                    if (isHashExt(ext)) {
+                        if (line[start] == '#') {
+                            facts.stats.commentLines++;
+                        } else {
+                            facts.stats.codeLines++;
+                        }
+                        continue;
+                    }
+
+                    // C-family /* */ block comment languages
+                    if (isSlashStarExt(ext)) {
+                        // Handle this line within a block comment
+                        if (inBlock) {
+                            facts.stats.commentLines++;
+                            auto endPos = line.find("*/", start);
+                            if (endPos != std::string::npos) {
+                                inBlock = false;
+                            }
+                            continue;
+                        }
+
+                        // Check for // single-line comment
+                        if (line.size() - start >= 2 && line[start] == '/' && line[start + 1] == '/') {
+                            facts.stats.commentLines++;
+                            continue;
+                        }
+
+                        // Check for /* possibly on this line
+                        auto blockStart = line.find("/*", start);
+                        if (blockStart != std::string::npos) {
+                            auto afterStart = blockStart + 2;
+                            auto blockEnd = line.find("*/", afterStart);
+                            if (blockEnd != std::string::npos) {
+                                // /* and */ on same line — inline block comment
+                                // Check if there is code before or after the comment
+                                bool codeBefore = false;
+                                for (size_t i = start; i < blockStart; ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        codeBefore = true;
+                                        break;
+                                    }
+                                }
+                                bool codeAfter = false;
+                                for (size_t i = blockEnd + 2; i < line.size(); ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        codeAfter = true;
+                                        break;
+                                    }
+                                }
+                                if (codeBefore || codeAfter) {
+                                    facts.stats.codeLines++;
+                                } else {
+                                    facts.stats.commentLines++;
+                                }
+                            } else {
+                                // /* starts here but doesn't end — enter block mode
+                                inBlock = true;
+                                // Check code before /*
+                                bool hasCode = false;
+                                for (size_t i = start; i < blockStart; ++i) {
+                                    if (line[i] != ' ' && line[i] != '\t') {
+                                        hasCode = true;
+                                        break;
+                                    }
+                                }
+                                if (hasCode) {
+                                    facts.stats.codeLines++;
+                                } else {
+                                    facts.stats.commentLines++;
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Plain code line
+                        facts.stats.codeLines++;
+                        continue;
+                    }
+
+                    // Unknown type, treat as code
+                    facts.stats.codeLines++;
+                }
+                if (file.bad()) {
+                    facts.stats.unreadableFiles++;
+                    recordSkip(facts, root, entryPath, "READ_ERROR");
+                }
+            } else {
+                facts.stats.unreadableFiles++;
+                recordSkip(facts, root, entryPath, "READ_ERROR");
+            }
+        }
+
+        it.increment(ec);
+        if (ec) {
+            // A traversal step failed (e.g. permission denied below a
+            // directory); the entry involved is skipped, not the scan.
+            recordSkip(facts, root, entryPath, "PERMISSION_DENIED");
+            ec.clear();
+        }
+    }
+
+    for (auto& [name, ls] : langMap) {
+        facts.languages.push_back(std::move(ls));
+    }
+    facts.structure = checkStructure(root);
+    return facts;
 }
 
 // --- Directory scanning ---
@@ -158,221 +381,16 @@ std::string Analyzer::languageFromExtension(const std::string& ext) const {
 }
 
 FileStats Analyzer::scanDirectory(const std::filesystem::path& root) const {
-    FileStats stats;
-    std::error_code ec;
-
-    for (auto it = std::filesystem::recursive_directory_iterator(root, ec);
-         it != std::filesystem::recursive_directory_iterator(); ) {
-        if (ec) {
-            // Skip unreadable entries, count one skipped entity
-            if (it.depth() > 0 && !ec.default_error_condition()) {
-                stats.skippedDirs++;
-            }
-            ++it;
-            ec.clear();
-            continue;
-        }
-
-        if (it->is_directory(ec) && shouldSkipDir(it->path())) {
-            it.disable_recursion_pending();
-            stats.skippedDirs++;
-            ++it;
-            continue;
-        }
-
-        if (it->is_regular_file(ec)) {
-            std::string ext = lowerExt(it->path());
-            stats.totalFiles++;
-
-            if (isSourceFile(ext)) {
-                stats.sourceFiles++;
-            } else if (isDocumentFile(ext)) {
-                stats.documentFiles++;
-            } else if (isConfigFile(ext)) {
-                stats.configFiles++;
-            }
-
-            if (isTestFile(it->path())) {
-                stats.testFiles++;
-            }
-
-            // Count lines with comment-style detection
-            std::ifstream file(it->path().string());
-            if (file.is_open()) {
-                std::string line;
-                bool inBlock = false;  // inside /* */ block comment
-                while (std::getline(file, line)) {
-                    stats.totalLines++;
-
-                    // Trim leading whitespace
-                    size_t start = line.find_first_not_of(" \t\r");
-
-                    if (start == std::string::npos) {
-                        stats.blankLines++;
-                        continue;
-                    }
-
-                    // Check for # comment first (script / config languages)
-                    if (isHashExt(ext)) {
-                        if (line[start] == '#') {
-                            stats.commentLines++;
-                        } else {
-                            stats.codeLines++;
-                        }
-                        continue;
-                    }
-
-                    // C-family /* */ block comment languages
-                    if (isSlashStarExt(ext)) {
-                        // Handle this line within a block comment
-                        if (inBlock) {
-                            stats.commentLines++;
-                            auto endPos = line.find("*/", start);
-                            if (endPos != std::string::npos) {
-                                inBlock = false;
-                            }
-                            continue;
-                        }
-
-                        // Check for // single-line comment
-                        if (line.size() - start >= 2 && line[start] == '/' && line[start + 1] == '/') {
-                            stats.commentLines++;
-                            continue;
-                        }
-
-                        // Check for /* possibly on this line
-                        auto blockStart = line.find("/*", start);
-                        if (blockStart != std::string::npos) {
-                            auto afterStart = blockStart + 2;
-                            auto blockEnd = line.find("*/", afterStart);
-                            if (blockEnd != std::string::npos) {
-                                // /* and */ on same line — inline block comment
-                                // Check if there is code before or after the comment
-                                bool codeBefore = false;
-                                for (size_t i = start; i < blockStart; ++i) {
-                                    if (line[i] != ' ' && line[i] != '\t') {
-                                        codeBefore = true;
-                                        break;
-                                    }
-                                }
-                                bool codeAfter = false;
-                                for (size_t i = blockEnd + 2; i < line.size(); ++i) {
-                                    if (line[i] != ' ' && line[i] != '\t') {
-                                        codeAfter = true;
-                                        break;
-                                    }
-                                }
-                                if (codeBefore || codeAfter) {
-                                    stats.codeLines++;
-                                } else {
-                                    stats.commentLines++;
-                                }
-                            } else {
-                                // /* starts here but doesn't end — enter block mode
-                                inBlock = true;
-                                // Check code before /*
-                                bool hasCode = false;
-                                for (size_t i = start; i < blockStart; ++i) {
-                                    if (line[i] != ' ' && line[i] != '\t') {
-                                        hasCode = true;
-                                        break;
-                                    }
-                                }
-                                if (hasCode) {
-                                    stats.codeLines++;
-                                } else {
-                                    stats.commentLines++;
-                                }
-                            }
-                            continue;
-                        }
-
-                        // Plain code line
-                        stats.codeLines++;
-                        continue;
-                    }
-
-                    // Unknown type, treat as code
-                    stats.codeLines++;
-                }
-                if (file.bad()) {
-                    stats.unreadableFiles++;
-                }
-            } else {
-                stats.unreadableFiles++;
-            }
-        }
-
-        ++it;
-    }
-
-    return stats;
+    return collectFacts(root).stats;
 }
 
 // --- Language detection ---
 
 std::vector<LangStats> Analyzer::detectLanguages(const std::filesystem::path& root) const {
-    std::map<std::string, LangStats> langMap;
-    std::error_code ec;
-
-    for (auto it = std::filesystem::recursive_directory_iterator(root, ec);
-         it != std::filesystem::recursive_directory_iterator(); ) {
-        if (ec) { ++it; ec.clear(); continue; }
-
-        if (it->is_directory(ec) && shouldSkipDir(it->path())) {
-            it.disable_recursion_pending();
-            ++it;
-            continue;
-        }
-
-        if (it->is_regular_file(ec)) {
-            std::string ext = lowerExt(it->path());
-            std::string lang = languageFromExt(ext);
-
-            auto& ls = langMap[lang];
-            ls.name = lang;
-            ls.files++;
-
-            // Quick line count
-            std::ifstream file(it->path().string());
-            if (file.is_open()) {
-                std::string line;
-                while (std::getline(file, line)) {
-                    ls.lines++;
-                }
-            }
-        }
-
-        ++it;
-    }
-
-    // Only include programming languages in the output.
-    // Markup / config / data languages (Markdown, JSON, YAML, etc.) are
-    // counted in summary.*Files but are not "languages" in the protocol sense.
-    static const std::set<std::string> PROGRAMMING_LANGUAGES = {
-        "C", "C++", "C/C++ Header",
-        "Java", "Kotlin", "Scala",
-        "Python", "Cython",
-        "JavaScript", "TypeScript",
-        "Go", "Rust", "Ruby", "PHP",
-        "Swift", "C#", "F#",
-        "Vue", "Svelte",
-        "CSS", "SCSS", "Less",
-        "SQL",
-        "Shell", "PowerShell", "Batch",
-        "Lua", "R", "Perl", "Dart", "Zig", "Nim"
-    };
-
-    // Sort by file count descending
-    std::vector<LangStats> result;
-    for (auto& [name, ls] : langMap) {
-        if (PROGRAMMING_LANGUAGES.count(name) > 0) {
-            result.push_back(std::move(ls));
-        }
-    }
+    std::vector<LangStats> result = filterProgrammingLanguages(collectFacts(root).languages);
+    // v1 order: file count descending (unchanged legacy behavior)
     std::sort(result.begin(), result.end(),
               [](const LangStats& a, const LangStats& b) { return a.files > b.files; });
-
     return result;
 }
 
