@@ -119,14 +119,20 @@ if(BUILD_TESTS)
   add_test(NAME cli-default-v1
     COMMAND openpulse-analyzer --path ${OPENPULSE_FIXTURE}
             --output ${OPENPULSE_REPORT_DIR}/default-v1.json)
+  set_tests_properties(cli-default-v1 PROPERTIES
+    FIXTURES_SETUP cli-default-v1)
 
   add_test(NAME cli-explicit-v1
     COMMAND openpulse-analyzer --protocol 1.0 --path ${OPENPULSE_FIXTURE}
             --output ${OPENPULSE_REPORT_DIR}/explicit-v1.json)
+  set_tests_properties(cli-explicit-v1 PROPERTIES
+    FIXTURES_SETUP cli-explicit-v1)
 
   add_test(NAME cli-v2-success
     COMMAND openpulse-analyzer --protocol 2.0 --path ${OPENPULSE_FIXTURE}
             --output ${OPENPULSE_REPORT_DIR}/v2.json)
+  set_tests_properties(cli-v2-success PROPERTIES
+    FIXTURES_SETUP cli-v2-success)
 
   add_test(NAME cli-default-v1-shape
     COMMAND ${CMAKE_COMMAND}
@@ -152,4 +158,21 @@ if(BUILD_TESTS)
             -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/CheckReport.cmake)
   set_tests_properties(cli-v2-shape PROPERTIES
     FIXTURES_REQUIRED cli-v2-success)
+
+  # v2 files must be exactly the canonical JSON bytes, no trailing newline
+  add_test(NAME cli-v2-canonical-bytes
+    COMMAND ${CMAKE_COMMAND}
+            -DREPORT=${OPENPULSE_REPORT_DIR}/v2.json
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/CheckCanonicalJson.cmake)
+  set_tests_properties(cli-v2-canonical-bytes PROPERTIES
+    FIXTURES_REQUIRED cli-v2-success)
+
+  # Real CLI run against a repo whose name contains CJK characters:
+  # must exit 0 with a valid UTF-8 report, never crash
+  add_test(NAME cli-v2-unicode-repo
+    COMMAND ${CMAKE_COMMAND}
+            -DANALYZER=$<TARGET_FILE:openpulse-analyzer>
+            -DFIXTURE=${OPENPULSE_FIXTURE}
+            -DWORK_DIR=${OPENPULSE_REPORT_DIR}/unicode
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/RunUnicodeRepo.cmake)
 endif()

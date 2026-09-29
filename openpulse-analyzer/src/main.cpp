@@ -94,16 +94,58 @@ CliArgs parseArgs(int argc, char* argv[]) {
     return args;
 }
 
-// Repository directory name only; never includes parent directories.
-// Falls back to a fixed placeholder when the name is empty or unsafe.
+// Minimal UTF-8 validator: rejects truncated sequences and bad
+// continuation bytes, so a name that would break JSON serialization
+// falls back to the placeholder instead of crashing the process.
+bool isValidUtf8(const std::string& s) {
+    size_t i = 0;
+    while (i < s.size()) {
+        const unsigned char c = static_cast<unsigned char>(s[i]);
+        if (c < 0x80) {
+            ++i;
+            continue;
+        }
+        size_t extra;
+        if (c >= 0xc2 && c < 0xe0) {
+            extra = 1;
+        } else if (c >= 0xe0 && c < 0xf0) {
+            extra = 2;
+        } else if (c >= 0xf0 && c < 0xf5) {
+            extra = 3;
+        } else {
+            return false;
+        }
+        if (i + extra >= s.size()) {
+            return false;
+        }
+        for (size_t k = 1; k <= extra; ++k) {
+            if ((static_cast<unsigned char>(s[i + k]) & 0xc0) != 0x80) {
+                return false;
+            }
+        }
+        i += extra + 1;
+    }
+    return true;
+}
+
+// Repository directory name as UTF-8; never includes parent directories.
+// Falls back to a fixed placeholder when the name is empty, unsafe, or
+// not valid UTF-8, so report construction can never fail on the name.
 std::string repositoryName(const std::filesystem::path& repoPath) {
     std::error_code ec;
     std::filesystem::path resolved = std::filesystem::absolute(repoPath, ec);
     if (ec) {
         resolved = repoPath;
     }
-    std::string name = resolved.lexically_normal().filename().string();
-    bool safe = !name.empty() && name.size() <= 128;
+    // path::string() would return active-code-page bytes on Windows,
+    // which are not UTF-8 for non-ASCII names and break nlohmann::json.
+#ifdef __cpp_char8_t
+    const std::u8string u8 = resolved.lexically_normal().filename().u8string();
+    const std::string name(reinterpret_cast<const char*>(u8.data()), u8.size());
+#else
+    const std::string name = resolved.lexically_normal().filename().u8string();
+#endif
+    bool safe = !name.empty() && name.size() <= 128 && isValidUtf8(name);
     if (safe) {
         for (unsigned char c : name) {
             if (c < 0x20 || c == 0x7f) {
@@ -115,13 +157,19 @@ std::string repositoryName(const std::filesystem::path& repoPath) {
     return safe ? name : "repository";
 }
 
-bool writeReport(const std::filesystem::path& outputPath, const std::string& content) {
+bool writeReport(const std::filesystem::path& outputPath, const std::string& content,
+                 bool trailingNewline) {
     std::ofstream out(outputPath, std::ios::binary | std::ios::trunc);
     if (!out) {
         std::cerr << "Error: cannot write to " << outputPath.string() << "\n";
         return false;
     }
-    out << content << "\n";
+    // v1 keeps its historical trailing newline; v2 must be exactly the
+    // canonical JSON bytes with no extra whitespace (protocol section 10).
+    out << content;
+    if (trailingNewline) {
+        out << "\n";
+    }
     out.close();
     if (!out) {
         std::cerr << "Error: failed to write report to " << outputPath.string() << "\n";
@@ -143,22 +191,28 @@ int runV2(const CliArgs& args) {
             // Best-effort FAILED report; the exit code remains the real
             // failure signal and must stay non-zero.
             auto report = builder.buildFailed("TRAVERSAL_ERROR", name, taskId, timestamp);
-            if (!writeReport(args.outputPath, report.dump())) {
+            if (!writeReport(args.outputPath, report.dump(), false)) {
                 return 4;
             }
             std::cerr << "Error: scan failed: cannot traverse repository\n";
             return 3;
         }
         auto report = builder.build(facts, name, taskId, timestamp);
-        if (!writeReport(args.outputPath, report.dump())) {
+        if (!writeReport(args.outputPath, report.dump(), false)) {
             return 4;
         }
         std::cout << "Report written to " << args.outputPath.string() << std::endl;
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Error: scan failed: " << e.what() << "\n";
-        auto report = builder.buildFailed("INTERNAL_ERROR", name, taskId, timestamp);
-        writeReport(args.outputPath, report.dump());  // best effort
+        // Best effort; never let FAILED-report construction crash the
+        // process — the non-zero exit code is the real failure signal.
+        try {
+            auto report = builder.buildFailed("INTERNAL_ERROR", name, taskId, timestamp);
+            writeReport(args.outputPath, report.dump(), false);
+        } catch (const std::exception& inner) {
+            std::cerr << "Error: cannot write FAILED report: " << inner.what() << "\n";
+        }
         return 3;
     }
 }
@@ -194,7 +248,7 @@ int main(int argc, char* argv[]) {
         openpulse::Analyzer analyzer;
         nlohmann::json report = analyzer.generateReport(config);
 
-        if (!writeReport(args.outputPath, report.dump(2))) {
+        if (!writeReport(args.outputPath, report.dump(2), true)) {
             return 4;
         }
         std::cout << "Report written to " << args.outputPath.string() << std::endl;
