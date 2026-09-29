@@ -44,14 +44,43 @@ struct StructureCheck {
     std::vector<std::string> buildFiles;
 };
 
+// A file or directory entry that could not be read during scanning.
+// relativePath uses '/' separators and is relative to the scan root;
+// reason is a protocol v2 FILE_SKIPPED reason (READ_ERROR / PERMISSION_DENIED).
+struct SkippedFile {
+    std::string relativePath;
+    std::string reason;
+};
+
+// Result of the single shared traversal. Both the v1 and v2 report
+// builders consume these facts; neither re-walks the directory tree.
+struct ScanFacts {
+    FileStats stats;
+    std::vector<LangStats> languages; // aggregated for every file, unsorted
+    StructureCheck structure;
+    std::vector<SkippedFile> skippedFiles;
+    bool traversalFailed = false;
+};
+
 class Analyzer {
 public:
+    // Protocol v1 report (default CLI output). Field set unchanged.
     nlohmann::json generateReport(const AnalyzerConfig& config) const;
+
+    // Single shared traversal collecting all scanning facts.
+    ScanFacts collectFacts(const std::filesystem::path& root) const;
+
+    // Filters aggregated language stats down to programming languages,
+    // preserving input order; callers apply the protocol-specific sort.
+    static std::vector<LangStats> filterProgrammingLanguages(std::vector<LangStats> langs);
+
+    std::string generateTaskId() const;
+    std::string generateTimestamp() const;
 
 #ifndef OPENPULSE_TEST
 private:
 #endif
-    // Scanning
+    // Scanning wrappers kept for compatibility; all share collectFacts().
     FileStats scanDirectory(const std::filesystem::path& root) const;
     std::vector<LangStats> detectLanguages(const std::filesystem::path& root) const;
     StructureCheck checkStructure(const std::filesystem::path& root) const;
@@ -72,8 +101,6 @@ private:
     nlohmann::json buildQuality() const;
     nlohmann::json buildRisks(const StructureCheck& check) const;
     nlohmann::json buildDependencies() const;
-    std::string generateTaskId() const;
-    std::string generateTimestamp() const;
 };
 
 } // namespace openpulse
