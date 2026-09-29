@@ -172,7 +172,6 @@ if(BUILD_TESTS)
   add_test(NAME cli-v2-unicode-repo
     COMMAND ${CMAKE_COMMAND}
             -DANALYZER=$<TARGET_FILE:openpulse-analyzer>
-            -DFIXTURE=${OPENPULSE_FIXTURE}
             -DWORK_DIR=${OPENPULSE_REPORT_DIR}/unicode
             -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/RunUnicodeRepo.cmake)
 endif()
