@@ -5,13 +5,13 @@
 - 任务状态：`PREPARED`，执行状态：`NOT_STARTED`
 - 建议分支：`test/analyzer-report-v2-contract`
 - 共同负责人：Java / Platform 负责人、C++ Analyzer 负责人
-- 已完成前置：任务 10 已由 PR #24 合并到 `main`，合并提交为 `897964c`
-- 待完成前置：任务 11 的 C++ 显式 v2 输出经过主线验收并合并到 `main`
+- 已完成前置：任务 10 已由 PR #24 合并到 `main`（`897964c`）；任务 11 已由 PR #26 合并到 `main`（`334b253`）
+- 任务 12A 开工基线：`main@334b253`；完整任务 12 必须等 Java `openpulse-default@1.0.0` 目录身份对齐合并到更新后的 `main` 后另行开始
 - 任务性质：固定联合 fixture，验证生产端与消费端遵守同一份已接受协议
 
 本任务把 C++ 真实生成的协议 `2.0` 报告交给仓库正式 Draft 2020-12 Schema 和 Java `AnalyzerReportReader` 验证，证明生产端与消费端能够在同一份报告上协作。它同时保留默认 v1 回归，不切换默认协议，不删除 v1，也不执行 v0.2 正式仓库实验。
 
-本文档只是任务 12 的准备工作。文档中列出的 fixture、命令、哈希和验收项在任务 11 合并后才执行；未勾选的项目和空白结果不能被解释为已通过。
+本文档只是任务 12 的准备工作。文档中列出的 fixture、命令、哈希和验收项在任务 12A 合并后才执行；未勾选的项目和空白结果不能被解释为已通过。`334b253` 是任务 12A 的起点，不是完整任务 12 的开工点。
 
 ## 为什么必须单独做这一步
 
@@ -41,11 +41,11 @@
 
 任务 12 只有在以下条件全部满足后才能开始执行（先阅读并钉死下方「联合基线：开工前必须钉死」一节，再进入这些门槛）：
 
-1. 从包含任务 10 和任务 11 的最新 `main` 创建任务分支，记录起始 commit。
+1. 从包含任务 10、任务 11 和任务 12A 的最新 `main` 创建任务分支，记录起始 commit；不得直接从任务 12A 的起始提交 `334b253` 开始完整任务 12。
 2. 任务 11 已提供真实 `--protocol 2.0` 输出、默认 v1 回归、稳定 ID、排序、状态与限制测试。
 3. C++ 任务报告写明 Analyzer 版本来源、rule set ID / version、SHA-256 实现及许可证、Schema 验证器和真实测试结果。
 4. Java 与 C++ 负责人确认本任务不需要修改已接受的协议字段或含义。
-5. 若任务 11 尚未合并、真实 v2 输出不能通过正式 Schema，或双方发现协议分歧，本任务保持 `NOT_STARTED` 或标记 `BLOCKED`，不能用手写 JSON 代替生产端结果。
+5. 若任务 12A 尚未合并、真实 v2 输出不能通过正式 Schema，或双方发现协议分歧，本任务保持 `NOT_STARTED` 或标记 `BLOCKED`，不能用手写 JSON 代替生产端结果。
 
 开始后必须先重新阅读：
 
@@ -64,11 +64,11 @@
 ### 1. 生产端身份
 
 - `analyzer.name` 固定为 `openpulse-analyzer`。
-- `analyzer.version` 必须来自 `CMakeLists.txt` 的 `project(openpulse-analyzer VERSION ...)`（当前为 `0.1.0`），不得复制 `docs/examples/*.sample.json` 里的 `0.2.0`。
+- `analyzer.version` 必须来自 `CMakeLists.txt` 的 `project(openpulse-analyzer VERSION ...)`（当前为 `0.2.0`），不得从示例或 Java 测试中另行手写来源。
 - `ruleSet.id` 固定为 `openpulse-default`。
-- `ruleSet.version` 固定为 `0.2.0`，与已接受的示例和 Java 规则目录保持一致。
+- C++ 当前真实 `ruleSet.version` 固定为 `1.0.0`。
 
-> 约束：Java `AnalyzerReportV2SemanticValidator` 目前只识别 `("openpulse-default", "0.2.0")` 这一个规则目录键。任务 11 若使用其他键或版本，Java 会以 `SEMANTIC_VIOLATION` 拒绝整份报告，而这不是契约缺陷；修复需要改动 Java 产品代码，超出本任务“原则上不修改产品代码”的范围。因此这里钉死上述值，任何改键/改版需求先回主线另立任务。
+> 约束：Java `AnalyzerReportV2SemanticValidator` 保留 `("openpulse-default", "0.2.0")` 供 `docs/examples` 正式示例回归使用，并由任务 12A 新增 `("openpulse-default", "1.0.0")` 作为当前 C++ 生产目录。`1.0.0` 只登记 `MISSING_README`、`MISSING_LICENSE`、`MISSING_CI`；示例中的 `LONG_FUNCTION` 不属于该生产目录。完整任务 12 不得为迁就旧示例而把 C++ 身份降回 `0.2.0`。
 
 ### 2. SUCCESS 与限制策略
 
@@ -79,15 +79,15 @@
 
 ### 3. 三条结构的固定向量
 
-任务 11 必须在回主线报告中发布当前三条规则的固定向量，格式与协议第 8 节一致。任务 12 开工前必须确认下表第三列全部有真实 SHA-256，且由 C++ 生产构造逻辑复算得出，不得手工改写：
+下表从当前 C++ `RuleCatalog.cpp` 的真实候选路径按协议第 8 节复算。任务 12 开工前必须再次由 C++ 生产构造逻辑复核，不得照抄已接受示例中候选路径不同的旧向量：
 
 | ruleId | expectedPaths（码点升序、去重） | 固定 `findingId`（`sha256:` + 64 位小写十六进制） |
 | --- | --- | --- |
-| `MISSING_README` | 当前全仓库未发布，任务 11 必须补齐 | 同上，任务 11 必须补齐 |
-| `MISSING_LICENSE` | `["COPYING","LICENSE"]` | `sha256:b9dcda3c6f619d65163780c30df7792cc3baf402ba42e2adeab4d8031ac161a8` |
-| `MISSING_CI` | `[".github/workflows","azure-pipelines.yml"]` | `sha256:1c090a45b827a6ed23196817880ef2a05968acf5280a0158a7b67ab0ff98eff7` |
+| `MISSING_README` | `["README","README.md","README.rst","README.txt"]` | `sha256:f8566b4e81b6029ff8ce1c3e7c562fe13f285991f522905b540a07899b6c2f9d` |
+| `MISSING_LICENSE` | `["LICENSE","LICENSE.md","LICENSE.txt"]` | `sha256:8313d87acf736e6d1f6112261e703bcef60fd37a2609bbd38ba83531e4d854af` |
+| `MISSING_CI` | `[".circleci",".github/workflows",".gitlab-ci.yml",".travis.yml","Jenkinsfile","azure-pipelines.yml"]` | `sha256:da40e56d7e706baed9f961c147037ff412f3c0d942f166631df2cc315ac1d0e3` |
 
-`MISSING_CI` 一行的值以已接受的示例为准，任务 11 按实际规则目录复算确认；`MISSING_README` 是唯一在协议与示例中都没有发布向量的规则，属于任务 11 报告必须补齐的缺口。
+这些向量只适用于 `openpulse-default@1.0.0` 当前真实候选路径。协议第 8 节的 `MISSING_LICENSE` 和已接受示例中的 `MISSING_CI` 仍是合法的算法回归向量，但候选路径与 C++ 生产目录不同，不能作为本联合基线的 findingId。
 
 ### 4. Java 联合测试的交接接口
 
@@ -181,7 +181,7 @@ fixture 中不得加入 `LONG_FUNCTION`、文本规则、依赖分析或其他�
 - Java 必须读取同一份 C++ builder 输出。`PARTIAL_SUCCESS` 可以进入可用报告流程；`FAILED` 只能作为受限诊断，不能由快照或任务状态逻辑伪装为成功。
 - C++ 原有测试仍须单独证明真实进程失败返回非零退出码；联合任务不得仅凭一份合法 `FAILED` JSON 推断退出码已经正确。
 
-如果任务 11 合并后的真实代码边界无法在不修改产品行为的前提下复用 builder，先回主线调整测试设计，不复制第二套报告生成代码。
+如果当前真实代码边界无法在不修改产品行为的前提下复用 builder，先回主线调整测试设计，不复制第二套报告生成代码。
 
 ### 4. 反例 fixture
 
@@ -247,7 +247,7 @@ scripts/verify-analyzer-report-v2-contract.ps1
 ### 阶段 A：锁定基线
 
 1. 记录分支、HEAD、`main` 和 `origin/main` 状态。
-2. 确认工作区干净，任务 10 与任务 11 都已包含在起始 commit 中。
+2. 确认工作区干净，任务 10、任务 11 与任务 12A 都已包含在起始 commit 中。
 3. 记录 CMake、编译器、CTest、Java、Maven、Schema 验证器和操作系统版本。
 4. 确认正式 Schema 仍只有 `docs/protocol/analyzer-report-v2.schema.json` 这一份来源，Java classpath 资源由构建复制。
 
@@ -358,6 +358,7 @@ C05、C06 的测试边界通过不等于真实操作系统故障已端到端覆�
 起始 main commit：
 任务 10 合并 commit：
 任务 11 合并 commit：
+任务 12A 合并 commit：
 本地 commit：
 
 fixture 清单版本：
@@ -415,9 +416,9 @@ C++ 负责人复核：
 - docs/protocol/analyzer-report-v2.schema.json
 - docs/protocol/analyzer-report-v2-migration.md
 
-只有在任务 11 已通过主线验收并合并后，才开始“OpenPulse AI 第十二步：
-报告协议 v2 联合契约验收”。从包含任务 10 和任务 11 的最新 main 创建
-test/analyzer-report-v2-contract 分支。
+只有在任务 11 与任务 12A 都已通过主线验收并合并后，才开始“OpenPulse AI
+第十二步：报告协议 v2 联合契约验收”。从包含任务 10、任务 11 和任务 12A
+的最新 main 创建 test/analyzer-report-v2-contract 分支。
 
 建立虚构的 complete 与 missing-structure 仓库 fixture，并用测试边界场景
 覆盖 PARTIAL_SUCCESS 与 FAILED。所有报告必须由 C++ 真实 CLI 或生产 v2

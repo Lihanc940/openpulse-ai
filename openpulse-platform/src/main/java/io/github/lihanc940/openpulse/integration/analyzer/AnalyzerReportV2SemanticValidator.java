@@ -76,6 +76,20 @@ public class AnalyzerReportV2SemanticValidator {
                             FindingType.PROJECT_STRUCTURE, Scope.REPOSITORY,
                             EvidenceKind.EXPECTED_PATHS_ABSENT
                     )
+            ),
+            new CatalogKey("openpulse-default", "1.0.0"), Map.of(
+                    "MISSING_CI", new RuleDefinition(
+                            FindingType.PROJECT_STRUCTURE, Scope.REPOSITORY,
+                            EvidenceKind.EXPECTED_PATHS_ABSENT
+                    ),
+                    "MISSING_LICENSE", new RuleDefinition(
+                            FindingType.PROJECT_STRUCTURE, Scope.REPOSITORY,
+                            EvidenceKind.EXPECTED_PATHS_ABSENT
+                    ),
+                    "MISSING_README", new RuleDefinition(
+                            FindingType.PROJECT_STRUCTURE, Scope.REPOSITORY,
+                            EvidenceKind.EXPECTED_PATHS_ABSENT
+                    )
             )
     );
 
