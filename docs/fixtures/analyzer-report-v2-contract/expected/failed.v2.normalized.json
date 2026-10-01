@@ -1,0 +1,1 @@
+{"analyzer":{"name":"openpulse-analyzer","version":"0.2.0"},"findings":[],"limitations":[{"kind":"SCAN_FAILED","message":"扫描未能完成，报告不可用于复核。","reason":"TRAVERSAL_ERROR","scope":"REPOSITORY"}],"protocolVersion":"2.0","repository":{"name":"fictional-failed-fixture","root":"."},"reviewability":"NOT_USABLE","ruleSet":{"id":"openpulse-default","version":"1.0.0"},"status":"FAILED"}

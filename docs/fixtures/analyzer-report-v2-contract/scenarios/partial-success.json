@@ -1,0 +1,34 @@
+{
+  "formatVersion": "openpulse-v2-contract-scenario@1",
+  "kind": "PARTIAL_SUCCESS",
+  "repositoryName": "fictional-partial-fixture",
+  "facts": {
+    "summary": {
+      "totalFiles": 3,
+      "sourceFiles": 1,
+      "documentFiles": 1,
+      "configFiles": 1,
+      "testFiles": 1,
+      "totalLines": 9,
+      "codeLines": 6,
+      "commentLines": 1,
+      "blankLines": 2
+    },
+    "languages": [
+      {"name": "Java", "files": 1, "lines": 6}
+    ],
+    "structure": {
+      "hasReadme": true,
+      "hasLicense": true,
+      "hasContributing": false,
+      "hasChangelog": false,
+      "hasCi": true,
+      "hasTests": true,
+      "hasDockerfile": false,
+      "buildFiles": ["pom.xml"]
+    },
+    "skippedFiles": [
+      {"relativePath": "generated/unreadable.bin", "reason": "READ_ERROR"}
+    ]
+  }
+}
