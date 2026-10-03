@@ -2,7 +2,7 @@
 
 ## 任务定位
 
-- 任务状态：`IMPLEMENTED`，执行状态：`LOCAL_VERIFIED`
+- 任务状态：`COMPLETE`，执行状态：`MERGED_VERIFIED`
 - 建议分支：`test/analyzer-report-v2-contract`
 - 共同负责人：Java / Platform 负责人、C++ Analyzer 负责人
 - 已完成前置：任务 10 已由 PR #24 合并到 `main`（`897964c`）；任务 11 已由 PR #26 合并到 `main`（`334b253`）
@@ -11,7 +11,7 @@
 
 本任务把 C++ 真实生成的协议 `2.0` 报告交给仓库正式 Draft 2020-12 Schema 和 Java `AnalyzerReportReader` 验证，证明生产端与消费端能够在同一份报告上协作。它同时保留默认 v1 回归，不切换默认协议，不删除 v1，也不执行 v0.2 正式仓库实验。
 
-本文档最初用于任务 12 准备；2026-10-02 已从 `main@327c519` 完成本地技术验收。`LOCAL_VERIFIED` 表示自动化证据已通过，但不代替 Java / C++ 负责人对 golden 和边界的共同人工确认，也不授权默认协议切换。
+本文档最初用于任务 12 准备；2026-10-02 已从 `main@327c519` 完成本地技术验收，2026-10-04 经 PR #28 合并到 `main@5c63638`。评审期间发现的进程输出安全问题已经修复并补充失败路径检查。任务完成只表示联合契约边界已验收，不授权默认协议切换。
 
 ## 2026-10-02 本地执行记录
 
@@ -28,8 +28,8 @@
 - 联合脚本：`scripts/verify-analyzer-report-v2-contract.ps1` 通过，并清理临时构建、报告和日志
 - 规范化 SHA-256：`complete=340a91dcc963cd5c0370bee9ee6fe2d61e1a72c6ed2b4e9a8f3d39634c115bd3`；`missing-structure=c257d6c403438d8c2666a3ab9d02e3e94ad485c13df1cc9719f628dd73b28890`；`partial-success=14258dedd85e76025c28b3020e357edfa9ca275d0909c59237e695d7cc908fb6`；`failed=faa92c13a5dd1cc57b123ed71465a9ee4f88479ea52fe75c9c40474dd3453a13`
 - 边界说明：C03、C04 是真实 CLI 联合覆盖；C05、C06 是生产 builder 测试边界覆盖。当前 C++ `1.0.0` 目录没有文件级规则，因此 N09 使用已接受的 Java v2 文件级示例执行单一位置变异；没有伪造 C++ 文件级生产能力。
-- 范围确认：没有修改 Java / C++ 产品行为、协议或 Schema；没有切换默认 v2、删除 v1、填写 validation CSV、push 或创建 PR。
-- 待人工确认：Java / C++ 负责人共同复核四份 golden、N09 边界和本地提交后，才能把任务状态从 `LOCAL_VERIFIED` 提升为 `COMPLETE`。
+- 范围确认：没有修改 Java / C++ 产品行为、协议或 Schema；没有切换默认 v2、删除 v1 或填写 validation CSV。
+- 合并确认：PR #28 已处理评审意见并合并为 `5c63638`；四份 golden、N09 边界、输出安全和联合脚本均保留在主线中。
 
 ## 为什么必须单独做这一步
 
