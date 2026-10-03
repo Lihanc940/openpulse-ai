@@ -76,10 +76,32 @@ if(BUILD_TESTS)
   endif()
   target_link_libraries(openpulse-analyzer-test-v2 PRIVATE nlohmann_json::nlohmann_json)
 
+  # Test-only adapter used by the repository-level v2 contract verification.
+  # It converts controlled scenario descriptions into ScanFacts and delegates
+  # all report construction to the production ReportV2Builder.
+  add_executable(openpulse-analyzer-contract-report-generator
+    ${OPENPULSE_ANALYZER_SOURCES}
+    tests/contract_report_generator.cpp
+  )
+  target_include_directories(openpulse-analyzer-contract-report-generator PRIVATE
+    include
+    third_party
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
+  )
+  target_compile_definitions(openpulse-analyzer-contract-report-generator PRIVATE OPENPULSE_TEST)
+  if(MSVC)
+    target_compile_options(openpulse-analyzer-contract-report-generator PRIVATE /utf-8)
+  endif()
+  target_link_libraries(openpulse-analyzer-contract-report-generator PRIVATE nlohmann_json::nlohmann_json)
+
   enable_testing()
   set(OPENPULSE_FIXTURE ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixture)
   set(OPENPULSE_REPORT_DIR ${CMAKE_CURRENT_BINARY_DIR}/cli-reports)
+  set(OPENPULSE_CONTRACT_FIXTURE
+      ${CMAKE_CURRENT_SOURCE_DIR}/../docs/fixtures/analyzer-report-v2-contract)
+  set(OPENPULSE_CONTRACT_REPORT_DIR ${CMAKE_CURRENT_BINARY_DIR}/contract-reports)
   file(MAKE_DIRECTORY ${OPENPULSE_REPORT_DIR})
+  file(MAKE_DIRECTORY ${OPENPULSE_CONTRACT_REPORT_DIR})
 
   add_test(
     NAME openpulse-analyzer-test
@@ -174,4 +196,40 @@ if(BUILD_TESTS)
             -DANALYZER=$<TARGET_FILE:openpulse-analyzer>
             -DWORK_DIR=${OPENPULSE_REPORT_DIR}/unicode
             -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/RunUnicodeRepo.cmake)
+
+  add_test(NAME contract-generate-partial
+    COMMAND openpulse-analyzer-contract-report-generator
+            --scenario ${OPENPULSE_CONTRACT_FIXTURE}/scenarios/partial-success.json
+            --output ${OPENPULSE_CONTRACT_REPORT_DIR}/partial-success.json
+            --task-id ctest_partial
+            --generated-at 2026-10-02T00:00:00Z)
+  set_tests_properties(contract-generate-partial PROPERTIES
+    FIXTURES_SETUP contract-partial)
+
+  add_test(NAME contract-partial-shape
+    COMMAND ${CMAKE_COMMAND}
+            -DREPORT=${OPENPULSE_CONTRACT_REPORT_DIR}/partial-success.json
+            -DEXPECT_PROTOCOL=2.0
+            -DEXPECT_STATUS=PARTIAL_SUCCESS
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/CheckReport.cmake)
+  set_tests_properties(contract-partial-shape PROPERTIES
+    FIXTURES_REQUIRED contract-partial)
+
+  add_test(NAME contract-generate-failed
+    COMMAND openpulse-analyzer-contract-report-generator
+            --scenario ${OPENPULSE_CONTRACT_FIXTURE}/scenarios/failed.json
+            --output ${OPENPULSE_CONTRACT_REPORT_DIR}/failed.json
+            --task-id ctest_failed
+            --generated-at 2026-10-02T00:00:00Z)
+  set_tests_properties(contract-generate-failed PROPERTIES
+    FIXTURES_SETUP contract-failed)
+
+  add_test(NAME contract-failed-shape
+    COMMAND ${CMAKE_COMMAND}
+            -DREPORT=${OPENPULSE_CONTRACT_REPORT_DIR}/failed.json
+            -DEXPECT_PROTOCOL=2.0
+            -DEXPECT_STATUS=FAILED
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/CheckReport.cmake)
+  set_tests_properties(contract-failed-shape PROPERTIES
+    FIXTURES_REQUIRED contract-failed)
 endif()

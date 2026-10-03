@@ -1,0 +1,15 @@
+{
+  "formatVersion": "openpulse-v2-contract-mutations@1",
+  "mutations": [
+    {"id": "N01", "change": "remove protocolVersion", "expectedFailure": "INVALID_PROTOCOL_VERSION"},
+    {"id": "N02", "change": "set protocolVersion to 2.1", "expectedFailure": "UNSUPPORTED_PROTOCOL_VERSION"},
+    {"id": "N03", "change": "add unknown top-level field", "expectedFailure": "SCHEMA_VIOLATION"},
+    {"id": "N04", "change": "replace a build file with an absolute path", "expectedFailure": "SCHEMA_VIOLATION"},
+    {"id": "N05", "change": "reverse findings", "expectedFailure": "SEMANTIC_VIOLATION"},
+    {"id": "N06", "change": "replace one findingId", "expectedFailure": "SEMANTIC_VIOLATION"},
+    {"id": "N07", "change": "add credential-like text to a message", "expectedFailure": "SEMANTIC_VIOLATION"},
+    {"id": "N08", "change": "make SUCCESS reviewability PARTIAL", "expectedFailure": "SCHEMA_VIOLATION"},
+    {"id": "N09", "change": "put a file location end before its start", "expectedFailure": "SEMANTIC_VIOLATION", "sourceBoundary": "accepted Java v2 file-finding example because the current C++ 1.0.0 catalog has no file-scoped rule"},
+    {"id": "N10", "change": "add an unknown evidence field", "expectedFailure": "SCHEMA_VIOLATION"}
+  ]
+}

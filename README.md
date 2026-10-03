@@ -70,13 +70,15 @@ Java 负责人已完成：
 - 报告协议 v2 已完成 Java/C++ 双方评审并标记为 `ACCEPTED`
 - 协议 v1 在实现迁移和默认版本切换前继续兼容
 
-当前开发任务：
+已合并的协议实现任务：
 
 - `docs/tasks/11-cpp-analyzer-report-v2-output.md`
-- C++ 负责人正在实现显式选择的 v2 输出；协议 v1 仍是默认输出
+- C++ 显式 v2 输出已由 PR #26 合并，`main` 对应提交为 `334b253`
+- Java `openpulse-default@1.0.0` 目录对齐已由 PR #27 合并，`main` 对应提交为 `327c519`
+- 协议 v1 仍是默认输出
 
-下一项共同任务已完成任务书准备，但尚未开始执行：
+当前共同任务：
 
 - `docs/tasks/12-v2-contract-integration.md`
-- 任务 11 合并后，Java 与 C++ 负责人将使用同一组虚构 fixture 完成“C++ 生成 -> Schema 验证 -> Java 读取”的联合契约验收
-- 当前没有联合 fixture 结果，也没有授权切换默认协议、移除 v1 或填写 v0.2 实验结果
+- `test/analyzer-report-v2-contract` 已从 `main@327c519` 完成本地技术验收：C01-C09、完整 C++、Java、MySQL/Testcontainers 和联合脚本均通过
+- 当前仍等待 Java / C++ 负责人共同复核 golden 与边界；没有授权切换默认协议、移除 v1 或填写 v0.2 实验结果

@@ -1,0 +1,6 @@
+{
+  "formatVersion": "openpulse-v2-contract-scenario@1",
+  "kind": "FAILED",
+  "repositoryName": "fictional-failed-fixture",
+  "reason": "TRAVERSAL_ERROR"
+}
