@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public final class FakeAnalyzerMain {
 
@@ -18,7 +19,22 @@ public final class FakeAnalyzerMain {
         System.err.println("fake analyzer stderr");
 
         switch (scenario) {
-            case "success" -> writeReport(outputPath);
+            case "success", "success-v1" -> writeV1Report(outputPath);
+            case "success-v2" -> copyV2Example(outputPath, "analyzer-report-v2.success.sample.json");
+            case "partial-v2" -> copyV2Example(outputPath, "analyzer-report-v2.partial-success.sample.json");
+            case "failed-v2" -> writeFailedV2Report(outputPath);
+            case "invalid-v2-schema" -> writeInvalidV2Report(outputPath);
+            case "invalid-v2-semantic" -> writeModifiedV2Report(
+                    outputPath,
+                    report -> report.replace(
+                            "sha256:b2435ebfd9d97636201cc988136190a1c7ade7b21ffb8d5bcb90ba77400c3711",
+                            "sha256:" + "0".repeat(64)
+                    )
+            );
+            case "invalid-v2-catalog" -> writeModifiedV2Report(
+                    outputPath,
+                    report -> report.replace("\"id\": \"openpulse-default\"", "\"id\": \"unknown-catalog\"")
+            );
             case "missing-report" -> {
                 // Exit successfully without creating the requested report.
             }
@@ -57,7 +73,7 @@ public final class FakeAnalyzerMain {
         throw new IllegalArgumentException("Missing argument: " + name);
     }
 
-    private static void writeReport(Path outputPath) throws IOException {
+    private static void writeV1Report(Path outputPath) throws IOException {
         try (InputStream input = FakeAnalyzerMain.class.getResourceAsStream(
                 "/contracts/analyzer-report-v1.sample.json"
         )) {
@@ -66,6 +82,59 @@ public final class FakeAnalyzerMain {
             }
             Files.copy(input, outputPath);
         }
+    }
+
+    private static void copyV2Example(Path outputPath, String fileName) throws IOException {
+        Files.copy(findV2Example(fileName), outputPath);
+    }
+
+    private static void writeInvalidV2Report(Path outputPath) throws IOException {
+        writeModifiedV2Report(
+                outputPath,
+                report -> report.replaceFirst("\\{", "{\"unexpected\":true,")
+        );
+    }
+
+    private static void writeModifiedV2Report(
+            Path outputPath,
+            java.util.function.UnaryOperator<String> modifier
+    ) throws IOException {
+        String validReport = Files.readString(findV2Example("analyzer-report-v2.success.sample.json"));
+        Files.writeString(outputPath, modifier.apply(validReport), StandardOpenOption.CREATE_NEW);
+    }
+
+    private static Path findV2Example(String fileName) throws IOException {
+        for (Path candidate : List.of(
+                Path.of("..", "docs", "examples", fileName),
+                Path.of("docs", "examples", fileName)
+        )) {
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IOException("Analyzer report v2 example is missing");
+    }
+
+    private static void writeFailedV2Report(Path outputPath) throws IOException {
+        Files.writeString(outputPath, """
+                {
+                  "protocolVersion":"2.0",
+                  "taskId":"task_runner_failed_001",
+                  "analyzer":{"name":"openpulse-analyzer","version":"0.2.0"},
+                  "ruleSet":{"id":"openpulse-default","version":"0.2.0"},
+                  "status":"FAILED",
+                  "reviewability":"NOT_USABLE",
+                  "repository":{"name":"fictional-workspace","root":"."},
+                  "findings":[],
+                  "limitations":[{
+                    "kind":"SCAN_FAILED",
+                    "scope":"REPOSITORY",
+                    "reason":"TRAVERSAL_ERROR",
+                    "message":"Repository traversal did not produce a reviewable report."
+                  }],
+                  "generatedAt":"2026-09-17T08:00:00+08:00"
+                }
+                """, StandardOpenOption.CREATE_NEW);
     }
 
     private static Process startSleepingDescendant(Path outputPath) throws IOException {

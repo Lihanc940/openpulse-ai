@@ -22,6 +22,7 @@ openpulse:
   analyzer:
     executable: ${OPENPULSE_ANALYZER_EXECUTABLE:openpulse-analyzer}
     timeout: ${OPENPULSE_ANALYZER_TIMEOUT:30s}
+    protocol-version: ${OPENPULSE_ANALYZER_PROTOCOL_VERSION:1.0}
   github:
     api-base-url: ${OPENPULSE_GITHUB_API_BASE_URL:https://api.github.com}
     token: ${OPENPULSE_GITHUB_TOKEN:}

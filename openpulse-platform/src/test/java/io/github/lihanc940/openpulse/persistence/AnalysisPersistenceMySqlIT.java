@@ -7,7 +7,9 @@ import io.github.lihanc940.openpulse.analysis.domain.AnalysisTaskId;
 import io.github.lihanc940.openpulse.analysis.domain.AnalysisTaskStatus;
 import io.github.lihanc940.openpulse.analysis.infrastructure.persistence.AnalysisTaskJpaEntity;
 import io.github.lihanc940.openpulse.analysis.infrastructure.persistence.SpringDataAnalysisTaskJpaRepository;
+import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerReportReader;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerStatus;
 import io.github.lihanc940.openpulse.integration.analyzer.model.RiskLevel;
 import io.github.lihanc940.openpulse.project.application.ProjectRepository;
@@ -36,6 +38,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 import tools.jackson.databind.ObjectMapper;
 
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
@@ -96,6 +99,9 @@ class AnalysisPersistenceMySqlIT {
 
     @Autowired
     private AnalysisReportSnapshotFactory snapshotFactory;
+
+    @Autowired
+    private AnalyzerReportReader analyzerReportReader;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -279,7 +285,8 @@ class AnalysisPersistenceMySqlIT {
         );
 
         AnalysisReportRecord saved = analysisReportRepository.save(snapshot);
-        AnalysisReportRecord reloaded = analysisReportRepository.findByTaskId(successfulTask.taskId()).orElseThrow();
+        AnalysisReportRecord reloaded = analysisReportRepository.findByTaskId(successfulTask.taskId())
+                .orElseThrow();
 
         assertThat(reloaded.analysisTaskId()).isEqualTo(successfulTask.taskId());
         assertThat(reloaded.protocolVersion()).isEqualTo("1.0");
@@ -362,6 +369,34 @@ class AnalysisPersistenceMySqlIT {
                 PersistenceFailure.INVALID_DATA
         );
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM analysis_reports", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void reportRepositoryStoresValidatedV2SnapshotInMySql() throws Exception {
+        AnalysisTask successfulTask = saveSuccessfulTask();
+        AnalyzerReportV2 report = analyzerReportReader.readV2(
+                Path.of("..", "docs", "examples", "analyzer-report-v2.success.sample.json")
+        );
+        AnalysisReportRecord snapshot = snapshotFactory.create(
+                successfulTask.taskId(),
+                report,
+                clockAt(30)
+        );
+
+        AnalysisReportRecord saved = analysisReportRepository.save(snapshot);
+        AnalysisReportRecord reloaded = analysisReportRepository.findByTaskId(successfulTask.taskId()).orElseThrow();
+
+        assertThat(reloaded.protocolVersion()).isEqualTo("2.0");
+        assertThat(reloaded.reportStatus()).isEqualTo(AnalysisReportStatus.SUCCESS);
+        assertThat(objectMapper.readTree(reloaded.reportJson()))
+                .isEqualTo(objectMapper.readTree(saved.reportJson()));
+        assertThat(reloaded.reportJson())
+                .contains("\"analyzer\"", "\"ruleSet\"", "\"findings\"", "\"limitations\"")
+                .doesNotContain("\"quality\"", "\"risks\"", "stdout", "stderr", "stackTrace");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT JSON_VALID(report_json) FROM analysis_reports",
+                Integer.class
+        )).isEqualTo(1);
     }
 
     @Test

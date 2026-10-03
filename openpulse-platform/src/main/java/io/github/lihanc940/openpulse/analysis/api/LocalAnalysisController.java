@@ -2,7 +2,7 @@ package io.github.lihanc940.openpulse.analysis.api;
 
 import io.github.lihanc940.openpulse.analysis.application.LocalAnalysisService;
 import io.github.lihanc940.openpulse.analysis.application.InvalidLocalAnalysisRequestException;
-import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportDocument;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +21,7 @@ public class LocalAnalysisController {
     }
 
     @PostMapping("/local")
-    public AnalyzerReport analyze(@RequestBody LocalAnalysisRequest request) {
+    public AnalyzerReportDocument analyze(@RequestBody LocalAnalysisRequest request) {
         if (request == null || request.repositoryPath() == null || request.repositoryPath().isBlank()) {
             throw new InvalidLocalAnalysisRequestException();
         }

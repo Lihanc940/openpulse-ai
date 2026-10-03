@@ -3,6 +3,7 @@ package io.github.lihanc940.openpulse.analysis.api;
 import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerExecutionException;
 import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerExecutionFailure;
 import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerProcessRunner;
+import io.github.lihanc940.openpulse.integration.analyzer.AnalyzerReportReader;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,9 @@ class LocalAnalysisApiEnabledTest {
     @MockitoBean
     AnalyzerProcessRunner analyzerProcessRunner;
 
+    @Autowired
+    AnalyzerReportReader analyzerReportReader;
+
     MockMvc mockMvc;
 
     @TempDir
@@ -67,6 +71,29 @@ class LocalAnalysisApiEnabledTest {
                 .andExpect(jsonPath("$.protocolVersion").value("1.0"))
                 .andExpect(jsonPath("$.taskId").value("task_local_api_001"))
                 .andExpect(jsonPath("$.summary.totalFiles").value(3));
+
+        verify(analyzerProcessRunner).analyze(repositoryPath);
+    }
+
+    @Test
+    void serializesTheCompleteConcreteV2Model() throws Exception {
+        Path repositoryPath = Files.createDirectory(testDirectory.resolve("v2 repository"));
+        when(analyzerProcessRunner.analyze(repositoryPath)).thenReturn(analyzerReportReader.readV2(
+                Path.of("..", "docs", "examples", "analyzer-report-v2.success.sample.json")
+        ));
+
+        mockMvc.perform(post(ENDPOINT)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson(repositoryPath.toString())))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.protocolVersion").value("2.0"))
+                .andExpect(jsonPath("$.analyzer.name").value("openpulse-analyzer"))
+                .andExpect(jsonPath("$.ruleSet.id").value("openpulse-default"))
+                .andExpect(jsonPath("$.reviewability").value("COMPLETE"))
+                .andExpect(jsonPath("$.findings[0].findingId").exists())
+                .andExpect(jsonPath("$.findings[0].evidence.kind").value("SYNTAX_METRIC"))
+                .andExpect(jsonPath("$.limitations").isArray());
 
         verify(analyzerProcessRunner).analyze(repositoryPath);
     }

@@ -24,6 +24,8 @@ final class ConfiguredAnalyzerCommandFactory implements AnalyzerCommandFactory {
     public List<String> create(Path repositoryPath, Path reportPath) {
         return List.of(
                 properties.executable(),
+                "--protocol",
+                properties.protocolVersion().cliValue(),
                 "--path",
                 repositoryPath.toString(),
                 "--output",
