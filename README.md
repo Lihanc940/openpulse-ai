@@ -76,9 +76,13 @@ Java 负责人已完成：
 - C++ 显式 v2 输出已由 PR #26 合并，`main` 对应提交为 `334b253`
 - Java `openpulse-default@1.0.0` 目录对齐已由 PR #27 合并，`main` 对应提交为 `327c519`
 - 协议 v1 仍是默认输出
-
-当前共同任务：
-
 - `docs/tasks/12-v2-contract-integration.md`
-- `test/analyzer-report-v2-contract` 已从 `main@327c519` 完成本地技术验收：C01-C09、完整 C++、Java、MySQL/Testcontainers 和联合脚本均通过
-- 当前仍等待 Java / C++ 负责人共同复核 golden 与边界；没有授权切换默认协议、移除 v1 或填写 v0.2 实验结果
+- v2 联合契约验收已由 PR #28 合并，`main` 对应提交为 `5c63638`
+- C01-C09、N01-N10、完整 C++、Java、MySQL/Testcontainers、确定性哈希和输出安全检查均已通过
+- 任务 12 证明显式 v2 生产端与消费端可以协作，但不授权直接切换默认协议或移除 v1
+
+下一阶段任务书：
+
+- `docs/tasks/13-java-analyzer-runtime-v2.md`：让 Java 正式运行链路可显式选择并读取 v1/v2，同时保持默认行为兼容
+- `docs/tasks/14-windows-cli-distribution.md`：建立 Windows x64 CLI 的终端摘要、可复现分发、校验、安装和卸载基线
+- 两项完成并合并后，再通过独立共同任务决定 CLI 默认输出是否从 v1 切换为 v2
