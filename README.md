@@ -86,3 +86,5 @@ Java 负责人已完成：
 - `docs/tasks/13-java-analyzer-runtime-v2.md`：让 Java 正式运行链路可显式选择并读取 v1/v2，同时保持默认行为兼容
 - `docs/tasks/14-windows-cli-distribution.md`：建立 Windows x64 CLI 的终端摘要、可复现分发、校验、安装和卸载基线
 - 两项完成并合并后，再通过独立共同任务决定 CLI 默认输出是否从 v1 切换为 v2
+
+Windows x64 本地 CLI 分发的用户说明见 `docs/windows-x64-cli.md`；维护者构建与验收流程见 `docs/windows-x64-distribution-build.md`。

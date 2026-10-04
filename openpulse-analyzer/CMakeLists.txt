@@ -3,6 +3,10 @@ project(openpulse-analyzer VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+  # Ship one executable without a separate Visual C++ redistributable.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -24,6 +28,7 @@ set(OPENPULSE_ANALYZER_SOURCES
   src/Analyzer.cpp
   src/RuleCatalog.cpp
   src/ReportV2Builder.cpp
+  src/SummaryV2.cpp
 )
 
 add_executable(openpulse-analyzer
@@ -37,8 +42,19 @@ target_include_directories(openpulse-analyzer PRIVATE
 )
 if(MSVC)
   target_compile_options(openpulse-analyzer PRIVATE /utf-8)
+  target_link_options(openpulse-analyzer PRIVATE /Brepro)
 endif()
 target_link_libraries(openpulse-analyzer PRIVATE nlohmann_json::nlohmann_json)
+
+install(TARGETS openpulse-analyzer RUNTIME DESTINATION bin COMPONENT Runtime)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../docs/windows-x64-cli.md
+  DESTINATION . RENAME README.md COMPONENT Runtime)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../docs/THIRD_PARTY_NOTICES.md
+  DESTINATION . COMPONENT Runtime)
+install(FILES ${nlohmann_json_SOURCE_DIR}/LICENSE.MIT
+  DESTINATION licenses RENAME nlohmann-json.LICENSE COMPONENT Runtime)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/third_party/picosha2/LICENSE
+  DESTINATION licenses RENAME picosha2.LICENSE COMPONENT Runtime)
 
 # --- Tests ---
 option(BUILD_TESTS "Build unit tests" ON)
@@ -232,4 +248,15 @@ if(BUILD_TESTS)
             -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/CheckReport.cmake)
   set_tests_properties(contract-failed-shape PROPERTIES
     FIXTURES_REQUIRED contract-failed)
+
+  add_test(NAME cli-summary-v1-rejected
+    COMMAND openpulse-analyzer --protocol 1.0 --summary --path ${OPENPULSE_FIXTURE}
+            --output ${OPENPULSE_REPORT_DIR}/invalid-summary.json)
+  set_tests_properties(cli-summary-v1-rejected PROPERTIES WILL_FAIL TRUE)
+
+  add_test(NAME cli-summary-v2
+    COMMAND openpulse-analyzer --protocol 2.0 --summary --path ${OPENPULSE_FIXTURE}
+            --output ${OPENPULSE_REPORT_DIR}/summary-v2.json)
+  set_tests_properties(cli-summary-v2 PROPERTIES
+    PASS_REGULAR_EXPRESSION "OpenPulse report summary")
 endif()
