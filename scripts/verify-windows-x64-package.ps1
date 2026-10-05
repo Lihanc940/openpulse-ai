@@ -26,7 +26,7 @@ if ($expectedHash -cne $actualHashLine) {
 Add-Type -AssemblyName System.IO.Compression
 $archive = [IO.Compression.ZipFile]::OpenRead($package)
 try {
-    $expectedEntries = @('README.md', 'THIRD_PARTY_NOTICES.md', 'bin/openpulse-analyzer.exe', 'licenses/nlohmann-json.LICENSE', 'licenses/picosha2.LICENSE') |
+    $expectedEntries = @('LICENSE', 'README.md', 'THIRD_PARTY_NOTICES.md', 'bin/openpulse-analyzer.exe', 'licenses/nlohmann-json.LICENSE', 'licenses/picosha2.LICENSE') |
         ForEach-Object { "$rootName/$_" } | Sort-Object
     $entries = @($archive.Entries | ForEach-Object FullName)
     if ([string]::Join('|', $entries) -cne [string]::Join('|', $expectedEntries)) { throw 'ZIP entry list or ordering is invalid' }

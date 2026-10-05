@@ -81,10 +81,16 @@ Java 负责人已完成：
 - C01-C09、N01-N10、完整 C++、Java、MySQL/Testcontainers、确定性哈希和输出安全检查均已通过
 - 任务 12 证明显式 v2 生产端与消费端可以协作，但不授权直接切换默认协议或移除 v1
 
-下一阶段任务书：
+已合并的运行与分发任务：
 
 - `docs/tasks/13-java-analyzer-runtime-v2.md`：让 Java 正式运行链路可显式选择并读取 v1/v2，同时保持默认行为兼容
+- Java v1/v2 运行时选择已由 PR #31 合并，`main` 对应提交为 `f2ad4bf`
 - `docs/tasks/14-windows-cli-distribution.md`：建立 Windows x64 CLI 的终端摘要、可复现分发、校验、安装和卸载基线
-- 两项完成并合并后，再通过独立共同任务决定 CLI 默认输出是否从 v1 切换为 v2
+- Windows x64 本地分发基线已由 PR #30 合并，`main` 对应提交为 `2b7b87f`
+- 协议 v1 仍为默认输出；是否切换默认协议继续由独立共同任务决定
 
 Windows x64 本地 CLI 分发的用户说明见 `docs/windows-x64-cli.md`；维护者构建与验收流程见 `docs/windows-x64-distribution-build.md`。
+
+## License
+
+OpenPulse AI is licensed under the [MIT License](LICENSE).
