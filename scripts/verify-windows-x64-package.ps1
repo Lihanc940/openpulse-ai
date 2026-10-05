@@ -8,6 +8,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
+. (Join-Path $PSScriptRoot 'windows-dumpbin.ps1')
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $package = (Resolve-Path -LiteralPath $PackagePath).Path
 $name = [IO.Path]::GetFileName($package)
@@ -106,11 +107,11 @@ try {
     if (Test-Path -LiteralPath $unwritable) { throw 'A failed output left a report' }
     if (@(Get-ChildItem -LiteralPath $reports -Recurse -File -Filter '*.tmp.*').Count -ne 0) { throw 'A temporary report was left behind' }
 
+    & (Join-Path $PSScriptRoot 'test-windows-dumpbin-resolution.ps1')
     $vswhere = 'C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
-    $dumpbin = @(& $vswhere -products '*' -latest -find 'VC\Tools\MSVC\**\Hostx64\x64\dumpbin.exe' | Select-Object -Last 1)
-    if ($dumpbin.Count -ne 1 -or -not (Test-Path -LiteralPath $dumpbin[0])) { throw 'dumpbin is unavailable; runtime dependency check is required' }
-    $dependencies = (& $dumpbin[0] /dependents $exe | Out-String)
-    $headers = (& $dumpbin[0] /headers $exe | Out-String)
+    $dumpbin = Resolve-WindowsDumpbin -VsWherePath $vswhere
+    $dependencies = (& $dumpbin /dependents $exe | Out-String)
+    $headers = (& $dumpbin /headers $exe | Out-String)
     if ($headers -notmatch '(?i)8664 machine \(x64\)') { throw 'Packaged executable is not x64' }
     if ($dependencies -match '(?i)(VCRUNTIME|MSVCP|CONCRT|UCRTBASE)\.DLL') { throw 'Unexpected dynamic Visual C++ runtime dependency' }
     Write-Host 'Runtime dependencies:'
