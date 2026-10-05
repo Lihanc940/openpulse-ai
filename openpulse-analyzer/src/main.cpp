@@ -5,17 +5,19 @@
 
 #include "Analyzer.h"
 #include "ReportV2Builder.h"
+#include "SummaryV2.h"
 #include "Version.h"
 
 namespace {
 
 void printUsage(std::ostream& os, const char* prog) {
-    os << "Usage: " << prog << " --path <repo-path> --output <report.json> [--protocol <1.0|2.0>]\n"
+    os << "Usage: " << prog << " --path <repo-path> --output <report.json> [--protocol <1.0|2.0>] [--summary]\n"
        << "\n"
        << "Options:\n"
        << "  --path <dir>      repository path to analyze (required)\n"
        << "  --output <file>   report JSON output path (required)\n"
        << "  --protocol <ver>  report protocol version: 1.0 or 2.0 (default: 1.0)\n"
+       << "  --summary         print a bounded protocol 2.0 summary\n"
        << "  --help, -h        show this help\n"
        << "\n"
        << "Exit codes:\n"
@@ -31,6 +33,7 @@ struct CliArgs {
     std::filesystem::path outputPath;
     std::string protocol = "1.0";
     bool protocolSet = false;
+    bool summary = false;
     bool valid = false;
 };
 
@@ -64,16 +67,21 @@ CliArgs parseArgs(int argc, char* argv[]) {
             }
             std::string value(argv[++i]);
             if (value != "1.0" && value != "2.0") {
-                std::cerr << "Error: unknown protocol version: " << value
-                          << " (supported: 1.0, 2.0)\n";
+                std::cerr << "Error: unsupported protocol version (supported: 1.0, 2.0)\n";
                 return args;
             }
             args.protocol = value;
+        } else if (arg == "--summary") {
+            if (args.summary) {
+                std::cerr << "Error: duplicate --summary argument\n";
+                return args;
+            }
+            args.summary = true;
         } else if (arg == "--help" || arg == "-h") {
             printUsage(std::cout, argv[0]);
             std::exit(0);
         } else {
-            std::cerr << "Error: unknown argument: " << arg << "\n";
+            std::cerr << "Error: unknown argument\n";
             printUsage(std::cerr, argv[0]);
             return args;
         }
@@ -87,6 +95,10 @@ CliArgs parseArgs(int argc, char* argv[]) {
     if (args.outputPath.empty()) {
         std::cerr << "Error: --output is required\n";
         printUsage(std::cerr, argv[0]);
+        return args;
+    }
+    if (args.summary && args.protocol != "2.0") {
+        std::cerr << "Error: --summary requires --protocol 2.0\n";
         return args;
     }
 
@@ -178,6 +190,38 @@ bool writeReport(const std::filesystem::path& outputPath, const std::string& con
     return true;
 }
 
+// v2 is staged beside the destination and published only after a complete
+// write. A failed write leaves no partial JSON at the requested path.
+bool writeReportV2(const std::filesystem::path& outputPath,
+                   const std::string& content, const std::string& taskId) {
+    std::filesystem::path temporary = outputPath;
+    temporary += ".tmp." + taskId;
+    {
+        std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+        if (!out) {
+            std::cerr << "Error: report output failed\n";
+            return false;
+        }
+        out << content;
+        out.close();
+        if (!out) {
+            std::error_code cleanupError;
+            std::filesystem::remove(temporary, cleanupError);
+            std::cerr << "Error: report output failed\n";
+            return false;
+        }
+    }
+    std::error_code ec;
+    std::filesystem::rename(temporary, outputPath, ec);
+    if (ec) {
+        std::error_code cleanupError;
+        std::filesystem::remove(temporary, cleanupError);
+        std::cerr << "Error: report output failed\n";
+        return false;
+    }
+    return true;
+}
+
 int runV2(const CliArgs& args) {
     openpulse::Analyzer analyzer;
     openpulse::ReportV2Builder builder;
@@ -191,27 +235,34 @@ int runV2(const CliArgs& args) {
             // Best-effort FAILED report; the exit code remains the real
             // failure signal and must stay non-zero.
             auto report = builder.buildFailed("TRAVERSAL_ERROR", name, taskId, timestamp);
-            if (!writeReport(args.outputPath, report.dump(), false)) {
+            if (!writeReportV2(args.outputPath, report.dump(), taskId)) {
                 return 4;
             }
+            if (args.summary) std::cout << openpulse::formatSummaryV2(report);
             std::cerr << "Error: scan failed: cannot traverse repository\n";
             return 3;
         }
         auto report = builder.build(facts, name, taskId, timestamp);
-        if (!writeReport(args.outputPath, report.dump(), false)) {
+        if (!writeReportV2(args.outputPath, report.dump(), taskId)) {
             return 4;
         }
-        std::cout << "Report written to " << args.outputPath.string() << std::endl;
+        if (args.summary) {
+            std::cout << openpulse::formatSummaryV2(report);
+        } else {
+            std::cout << "Report written to " << args.outputPath.string() << std::endl;
+        }
         return 0;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: scan failed: " << e.what() << "\n";
+    } catch (const std::exception&) {
+        std::cerr << "Error: scan failed\n";
         // Best effort; never let FAILED-report construction crash the
         // process — the non-zero exit code is the real failure signal.
         try {
             auto report = builder.buildFailed("INTERNAL_ERROR", name, taskId, timestamp);
-            writeReport(args.outputPath, report.dump(), false);
-        } catch (const std::exception& inner) {
-            std::cerr << "Error: cannot write FAILED report: " << inner.what() << "\n";
+            if (writeReportV2(args.outputPath, report.dump(), taskId) && args.summary) {
+                std::cout << openpulse::formatSummaryV2(report);
+            }
+        } catch (const std::exception&) {
+            std::cerr << "Error: cannot write FAILED report\n";
         }
         return 3;
     }
@@ -230,11 +281,11 @@ int main(int argc, char* argv[]) {
     // Validate --path exists and is a directory
     std::error_code ec;
     if (!std::filesystem::exists(args.repoPath, ec)) {
-        std::cerr << "Error: path does not exist: " << args.repoPath.string() << "\n";
+        std::cerr << "Error: path does not exist\n";
         return 2;
     }
     if (!std::filesystem::is_directory(args.repoPath, ec)) {
-        std::cerr << "Error: path is not a directory: " << args.repoPath.string() << "\n";
+        std::cerr << "Error: path is not a directory\n";
         return 2;
     }
 

@@ -7,6 +7,7 @@
 #include "Analyzer.h"
 #include "ReportV2Builder.h"
 #include "RuleCatalog.h"
+#include "SummaryV2.h"
 #include "Version.h"
 
 #include <algorithm>
@@ -418,6 +419,30 @@ void test_unsafePathsRejected() {
     TEST(threw);
 }
 
+void test_summaryIsBoundedAndSafe() {
+    openpulse::ReportV2Builder builder;
+    std::vector<openpulse::SkippedFile> skips;
+    for (int i = 0; i < 8; ++i) {
+        skips.push_back({"private-path-" + std::to_string(i) + ".txt", "READ_ERROR"});
+    }
+    auto report = builder.build(factsWithSkips(skips), "private-repository",
+                                "task_test", "2026-09-25T12:00:00Z");
+    const std::string summary = openpulse::formatSummaryV2(report);
+    TEST(summary.find("PARTIAL_SUCCESS") != std::string::npos);
+    TEST(summary.find("Limitations: 8") != std::string::npos);
+    TEST(summary.find("3 more limitations") != std::string::npos);
+    TEST(summary.find("private-path") == std::string::npos);
+    TEST(summary.find("private-repository") == std::string::npos);
+    TEST(summary == openpulse::formatSummaryV2(report));
+
+    auto failed = builder.buildFailed("TRAVERSAL_ERROR", "private-repository",
+                                      "task_test", "2026-09-25T12:00:00Z");
+    const std::string failedSummary = openpulse::formatSummaryV2(failed);
+    TEST(failedSummary.find("FAILED") != std::string::npos);
+    TEST(failedSummary.find("Files: unavailable") != std::string::npos);
+    TEST(failedSummary.find("private-repository") == std::string::npos);
+}
+
 } // anonymous namespace
 
 int main() {
@@ -444,6 +469,7 @@ int main() {
     test_failedReport();
     test_duplicateStableKeysRejected();
     test_unsafePathsRejected();
+    test_summaryIsBoundedAndSafe();
 
     std::cout << "\n---\n";
     std::cout << "Passed: " << g_passed << ", Failed: " << g_failed << std::endl;
