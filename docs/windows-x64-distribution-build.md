@@ -1,6 +1,6 @@
 # Windows x64 CLI local distribution baseline
 
-This is a maintainer procedure for task 14. It builds a local package for review. Do not upload the ZIP or create a public Release until both project owners choose and commit a root-level OpenPulse license.
+This is the maintainer procedure for building and reviewing the Windows x64 package. Both project owners selected the MIT License, which is committed at the repository root and included in the archive. Publish only artifacts built from a reviewed release commit or tag after this complete verification procedure passes.
 
 ## Prerequisites
 

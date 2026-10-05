@@ -23,4 +23,4 @@ Exit codes: `0` success, `1` invalid arguments, `2` missing or invalid repositor
 
 To upgrade, check the new ZIP hash and extract it into a new versioned directory. Keep old reports where you created them. To roll back, call the executable in the previous directory and select the protocol explicitly. To uninstall, delete only the version directory you extracted and any user-level PATH entry you added yourself. This does not remove repositories, JSON reports or other installed versions.
 
-The project has not yet chosen a root-level OpenPulse license, so this build is a local distribution baseline and is not an approved public release. `THIRD_PARTY_NOTICES.md` and `licenses/` describe licenses of included third-party code; those licenses do not license OpenPulse itself.
+OpenPulse AI is licensed under the MIT License included as `LICENSE`. `THIRD_PARTY_NOTICES.md` and `licenses/` record the separate licenses of included third-party code. Only download release artifacts from the project's official GitHub Releases page, and verify the adjacent SHA-256 file before running the executable.
