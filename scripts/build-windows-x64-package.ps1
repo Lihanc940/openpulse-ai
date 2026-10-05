@@ -61,7 +61,7 @@ try {
 
     $stage = Join-Path $installRoot $rootName
     Invoke-Checked 'Install package tree' $cmake @('--install', $buildRoot, '--config', 'Release', '--prefix', $stage, '--component', 'Runtime')
-    $expected = @('LICENSE', 'README.md', 'THIRD_PARTY_NOTICES.md', 'bin/openpulse-analyzer.exe', 'licenses/nlohmann-json.LICENSE', 'licenses/picosha2.LICENSE')
+    $expected = @('LICENSE', 'README.md', 'README.zh-CN.md', 'THIRD_PARTY_NOTICES.md', 'bin/openpulse-analyzer.exe', 'licenses/nlohmann-json.LICENSE', 'licenses/picosha2.LICENSE')
     $actual = @(Get-ChildItem -LiteralPath $stage -Recurse -File | ForEach-Object { [IO.Path]::GetRelativePath($stage, $_.FullName).Replace('\', '/') } | Sort-Object)
     if ([string]::Join('|', $actual) -cne [string]::Join('|', ($expected | Sort-Object))) {
         throw "Unexpected install tree: $([string]::Join(', ', $actual))"

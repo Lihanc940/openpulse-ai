@@ -89,7 +89,7 @@ Java 负责人已完成：
 - Windows x64 本地分发基线已由 PR #30 合并，`main` 对应提交为 `2b7b87f`
 - 协议 v1 仍为默认输出；是否切换默认协议继续由独立共同任务决定
 
-Windows x64 本地 CLI 分发的用户说明见 `docs/windows-x64-cli.md`；维护者构建与验收流程见 `docs/windows-x64-distribution-build.md`。
+Windows x64 本地 CLI 分发说明提供[中文使用指南](docs/windows-x64-cli.zh-CN.md)和[英文使用指南](docs/windows-x64-cli.md)；维护者构建与验收流程见 [Windows x64 分发基线](docs/windows-x64-distribution-build.md)。
 
 ## License
 
