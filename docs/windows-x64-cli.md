@@ -2,11 +2,13 @@
 
 This ZIP contains the local CLI. No account, website, Java, CMake or Visual Studio is needed to run it. The executable is built for Windows x64 with the MSVC runtime linked statically. Windows system DLLs are still required.
 
+中文使用指南：发布包内的 `README.zh-CN.md`；仓库中的[中文源文档](https://github.com/Lihanc940/openpulse-ai/blob/main/docs/windows-x64-cli.zh-CN.md)。
+
 ## Check and install
 
-Keep the ZIP and its adjacent `.zip.sha256` file together. In PowerShell, run `Get-FileHash .\openpulse-analyzer-0.2.0-windows-x64.zip -Algorithm SHA256` and compare the 64 hexadecimal characters with the first field of `.sha256`. A matching hash checks file integrity; it is not a digital signature or proof of publisher identity.
+Keep the ZIP and its adjacent `.zip.sha256` file together. In PowerShell, run `Get-FileHash .\openpulse-analyzer-0.2.1-windows-x64.zip -Algorithm SHA256` and compare the 64 hexadecimal characters with the first field of `.sha256`. A matching hash checks file integrity; it is not a digital signature or proof of publisher identity.
 
-Extract the ZIP into a versioned directory you choose, such as `C:\Tools\openpulse-analyzer-0.2.0`. The archive already contains an `openpulse-analyzer-0.2.0` root directory. No installer, administrator rights, registry edit or system PATH change is needed. Keep each version in its own directory.
+Extract the ZIP into a versioned directory you choose, such as `C:\Tools\openpulse-analyzer-0.2.1`. The archive already contains an `openpulse-analyzer-0.2.1` root directory. No installer, administrator rights, registry edit or system PATH change is needed. Keep each version in its own directory.
 
 From the extracted root directory:
 

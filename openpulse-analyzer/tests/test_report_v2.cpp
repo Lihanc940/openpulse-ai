@@ -64,7 +64,7 @@ const std::regex kSemver(
 
 void test_versionInjection() {
     TEST(std::string(OPENPULSE_ANALYZER_NAME) == "openpulse-analyzer");
-    TEST(std::string(OPENPULSE_ANALYZER_VERSION) == "0.2.0");
+    TEST(std::string(OPENPULSE_ANALYZER_VERSION) == "0.2.1");
     TEST(std::regex_match(OPENPULSE_ANALYZER_VERSION, kSemver));
 
     openpulse::Analyzer a;

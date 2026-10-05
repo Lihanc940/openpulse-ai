@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(openpulse-analyzer VERSION 0.2.0 LANGUAGES CXX)
+project(openpulse-analyzer VERSION 0.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -49,6 +49,8 @@ target_link_libraries(openpulse-analyzer PRIVATE nlohmann_json::nlohmann_json)
 install(TARGETS openpulse-analyzer RUNTIME DESTINATION bin COMPONENT Runtime)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../docs/windows-x64-cli.md
   DESTINATION . RENAME README.md COMPONENT Runtime)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../docs/windows-x64-cli.zh-CN.md
+  DESTINATION . RENAME README.zh-CN.md COMPONENT Runtime)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../docs/THIRD_PARTY_NOTICES.md
   DESTINATION . COMPONENT Runtime)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE
