@@ -85,6 +85,18 @@ javac -version
 mvn -version
 ```
 
+### 本地 Analyzer 运行配置
+
+Java Platform 启动 C++ Analyzer 时会显式选择报告协议，不依赖 C++ 当前默认值。相关环境变量如下：
+
+```text
+OPENPULSE_ANALYZER_EXECUTABLE
+OPENPULSE_ANALYZER_TIMEOUT
+OPENPULSE_ANALYZER_PROTOCOL_VERSION
+```
+
+`OPENPULSE_ANALYZER_PROTOCOL_VERSION` 未配置时为 `1.0`，只接受精确值 `1.0` 或 `2.0`。需要验证 v2 运行链路时显式设为 `2.0`；出现兼容问题时显式恢复为 `1.0`。不要填写个人绝对路径或依赖 C++ 的隐含默认协议。
+
 ### IntelliJ IDEA
 
 用途：编写、运行和调试 Java。个人学习和开源开发可使用 Community 版本。

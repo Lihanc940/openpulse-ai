@@ -1,6 +1,7 @@
 package io.github.lihanc940.openpulse.integration.analyzer;
 
-import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportDocument;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class AnalyzerProcessRunner {
         this.reportReader = reportReader;
     }
 
-    public AnalyzerReport analyze(Path repositoryPath) {
+    public AnalyzerReportDocument analyze(Path repositoryPath) {
         Path normalizedRepositoryPath = validateRepositoryPath(repositoryPath);
         Path workDirectory = createWorkDirectory();
         AnalyzerExecutionException executionFailure = null;
@@ -108,7 +109,7 @@ public class AnalyzerProcessRunner {
         }
     }
 
-    private AnalyzerReport runAnalyzer(Path repositoryPath, Path workDirectory) {
+    private AnalyzerReportDocument runAnalyzer(Path repositoryPath, Path workDirectory) {
         Path reportPath = workDirectory.resolve(REPORT_FILE_NAME);
         Path stdoutPath = workDirectory.resolve(STDOUT_FILE_NAME);
         Path stderrPath = workDirectory.resolve(STDERR_FILE_NAME);
@@ -133,12 +134,30 @@ public class AnalyzerProcessRunner {
         }
 
         try {
-            return reportReader.readV1(reportPath);
+            AnalyzerReportDocument report = reportReader.read(reportPath);
+            validateRequestedProtocol(report);
+            return report;
         } catch (AnalyzerReportReadException exception) {
             throw new AnalyzerExecutionException(
                     AnalyzerExecutionFailure.REPORT_INVALID,
                     "Analyzer produced an invalid report",
                     exception
+            );
+        }
+    }
+
+    private void validateRequestedProtocol(AnalyzerReportDocument report) {
+        if (!properties.protocolVersion().cliValue().equals(report.protocolVersion())) {
+            throw new AnalyzerExecutionException(
+                    AnalyzerExecutionFailure.REPORT_INVALID,
+                    "Analyzer report protocol version does not match the requested version"
+            );
+        }
+        if (report instanceof AnalyzerReportV2 v2Report
+                && v2Report.status() == AnalyzerReportV2.Status.FAILED) {
+            throw new AnalyzerExecutionException(
+                    AnalyzerExecutionFailure.REPORT_INVALID,
+                    "Analyzer produced a failed report that is not a usable analysis result"
             );
         }
     }

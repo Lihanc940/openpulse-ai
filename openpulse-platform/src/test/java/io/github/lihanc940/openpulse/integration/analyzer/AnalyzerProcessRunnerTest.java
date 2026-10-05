@@ -1,6 +1,8 @@
 package io.github.lihanc940.openpulse.integration.analyzer;
 
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportDocument;
+import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,11 +42,116 @@ class AnalyzerProcessRunnerTest {
         AnalyzerCommandFactory commandFactory = fakeAnalyzerCommand("success", workDirectory);
         AnalyzerProcessRunner runner = runner(Duration.ofSeconds(5), commandFactory);
 
-        AnalyzerReport report = runner.analyze(repositoryPath);
+        AnalyzerReportDocument report = runner.analyze(repositoryPath);
 
-        assertThat(report.protocolVersion()).isEqualTo("1.0");
-        assertThat(report.taskId()).isEqualTo("task_demo_001");
+        assertThat(report).isInstanceOfSatisfying(AnalyzerReport.class, v1 -> {
+            assertThat(v1.protocolVersion()).isEqualTo("1.0");
+            assertThat(v1.taskId()).isEqualTo("task_demo_001");
+        });
         assertThat(workDirectory.get()).isNotNull();
+        assertThat(workDirectory.get()).doesNotExist();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "success-v2, SUCCESS",
+            "partial-v2, PARTIAL_SUCCESS"
+    })
+    void returnsV2ReportsThroughTheRealReader(String scenario, String expectedStatus) throws Exception {
+        Path repositoryPath = Files.createDirectory(testDirectory.resolve("v2-" + expectedStatus));
+        AtomicReference<Path> workDirectory = new AtomicReference<>();
+        AnalyzerProcessRunner runner = runner(
+                Duration.ofSeconds(5),
+                AnalyzerProtocolVersion.V2_0,
+                fakeAnalyzerCommand(scenario, workDirectory)
+        );
+
+        AnalyzerReportDocument report = runner.analyze(repositoryPath);
+
+        assertThat(report).isInstanceOfSatisfying(AnalyzerReportV2.class, v2 -> {
+            assertThat(v2.protocolVersion()).isEqualTo("2.0");
+            assertThat(v2.status().name()).isEqualTo(expectedStatus);
+            assertThat(v2.analyzer().name()).isEqualTo("openpulse-analyzer");
+            assertThat(v2.ruleSet().id()).isEqualTo("openpulse-default");
+        });
+        assertThat(workDirectory.get()).doesNotExist();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1.0, success-v2",
+            "2.0, success-v1"
+    })
+    void rejectsReportProtocolThatDoesNotMatchRequestedVersion(
+            String requestedVersion,
+            String scenario
+    ) throws Exception {
+        Path repositoryPath = Files.createDirectory(testDirectory.resolve("mismatch-" + scenario));
+        AtomicReference<Path> workDirectory = new AtomicReference<>();
+        AnalyzerProcessRunner runner = runner(
+                Duration.ofSeconds(5),
+                AnalyzerProtocolVersion.fromCliValue(requestedVersion),
+                fakeAnalyzerCommand(scenario, workDirectory)
+        );
+
+        AnalyzerExecutionException exception = catchThrowableOfType(
+                AnalyzerExecutionException.class,
+                () -> runner.analyze(repositoryPath)
+        );
+
+        assertThat(exception.failure()).isEqualTo(AnalyzerExecutionFailure.REPORT_INVALID);
+        assertThat(exception).hasMessageContaining("does not match");
+        assertThat(workDirectory.get()).doesNotExist();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "invalid-v2-schema, SCHEMA_VIOLATION",
+            "invalid-v2-semantic, SEMANTIC_VIOLATION",
+            "invalid-v2-catalog, SEMANTIC_VIOLATION"
+    })
+    void mapsInvalidV2ReportsToReportInvalidWithoutLeakingBody(
+            String scenario,
+            AnalyzerReportReadFailure expectedReadFailure
+    ) throws Exception {
+        Path repositoryPath = Files.createDirectory(testDirectory.resolve(scenario));
+        AtomicReference<Path> workDirectory = new AtomicReference<>();
+        AnalyzerProcessRunner runner = runner(
+                Duration.ofSeconds(5),
+                AnalyzerProtocolVersion.V2_0,
+                fakeAnalyzerCommand(scenario, workDirectory)
+        );
+
+        AnalyzerExecutionException exception = catchThrowableOfType(
+                AnalyzerExecutionException.class,
+                () -> runner.analyze(repositoryPath)
+        );
+
+        assertThat(exception.failure()).isEqualTo(AnalyzerExecutionFailure.REPORT_INVALID);
+        assertThat(exception).hasCauseInstanceOf(AnalyzerReportReadException.class);
+        assertThat(((AnalyzerReportReadException) exception.getCause()).failure())
+                .isEqualTo(expectedReadFailure);
+        assertThat(exception.getMessage()).doesNotContain("unexpected", "protocolVersion");
+        assertThat(workDirectory.get()).doesNotExist();
+    }
+
+    @Test
+    void rejectsV2FailedReportAsAnUnusableAnalysisResult() throws Exception {
+        Path repositoryPath = Files.createDirectory(testDirectory.resolve("failed-v2"));
+        AtomicReference<Path> workDirectory = new AtomicReference<>();
+        AnalyzerProcessRunner runner = runner(
+                Duration.ofSeconds(5),
+                AnalyzerProtocolVersion.V2_0,
+                fakeAnalyzerCommand("failed-v2", workDirectory)
+        );
+
+        AnalyzerExecutionException exception = catchThrowableOfType(
+                AnalyzerExecutionException.class,
+                () -> runner.analyze(repositoryPath)
+        );
+
+        assertThat(exception.failure()).isEqualTo(AnalyzerExecutionFailure.REPORT_INVALID);
+        assertThat(exception).hasMessageContaining("not a usable analysis result");
         assertThat(workDirectory.get()).doesNotExist();
     }
 
@@ -283,7 +390,19 @@ class AnalyzerProcessRunnerTest {
     }
 
     private AnalyzerProcessRunner runner(Duration timeout, AnalyzerCommandFactory commandFactory) {
-        AnalyzerProcessProperties properties = new AnalyzerProcessProperties("unused-in-tests", timeout);
+        return runner(timeout, AnalyzerProtocolVersion.V1_0, commandFactory);
+    }
+
+    private AnalyzerProcessRunner runner(
+            Duration timeout,
+            AnalyzerProtocolVersion protocolVersion,
+            AnalyzerCommandFactory commandFactory
+    ) {
+        AnalyzerProcessProperties properties = new AnalyzerProcessProperties(
+                "unused-in-tests",
+                timeout,
+                protocolVersion.cliValue()
+        );
         return new AnalyzerProcessRunner(properties, commandFactory, reportReader);
     }
 
