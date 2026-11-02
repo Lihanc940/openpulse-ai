@@ -36,6 +36,7 @@ P1 Java/C++ 本地协作闭环已经完成，GitHub URL 解析、公开仓库元
 ```text
 Openpulse AI/
   openpulse-analyzer-client/  无 Spring 的 Java 严格 Reader 和进程客户端
+  openpulse-desktop/    JavaFX 中文本地桌面工作区
   openpulse-platform/   Java 编排、持久化和后续团队服务
   openpulse-analyzer/   C++20 本地分析核心
   openpulse-web/        后续团队模式的 Vue 3 前端
@@ -57,6 +58,8 @@ Set-Location .\openpulse-platform
 ```
 
 `verify` 还运行 Platform 的 MySQL/Testcontainers 集成测试，需要可用的 Docker。优先使用上面的聚合入口，避免引用本机缓存的旧共享库。这些命令无需设置 `MAVEN_BASEDIR`。任务 16 第一阶段的边界、学习入口和验收记录见 [共享客户端阶段记录](docs/tasks/16-stage-1-analyzer-client.md)。
+
+任务 16 第二阶段已实现本地开发窗口：选择项目、后台真实分析、取消/超时/失败恢复、概览和发现证据、扫描限制，以及严格 v2 JSON 导入导出。开发环境构建、启动和演示步骤见 [中文桌面开发指南](docs/desktop-development.zh-CN.md)，验证范围见 [第二阶段验收记录](docs/tasks/16-stage-2-desktop-workflow.md)。第三阶段的运行环境捆绑与 app-image/ZIP 便携分发尚未实施；当前不提供免装 JDK 的桌面包。
 
 ## 工程约定
 
@@ -108,7 +111,7 @@ Windows x64 本地 CLI 分发说明提供[中文使用指南](docs/windows-x64-c
 2026-11-02 真实试用后的工作顺序：
 
 - [任务 15：多模块结构识别修复](docs/tasks/15-analyzer-monorepo-fix.md)：准备 0.2.2 补丁，修正子模块测试/构建文件识别并补充中文终端说明；候选包不等于已公开发布。
-- [任务 16：Windows 桌面分析界面](docs/tasks/16-java-desktop-analysis-ui.md)：下一项 Java 任务，采用 JavaFX，提供选择目录、点击分析、查看发现和保存报告的本地操作闭环。
+- [任务 16：Windows 桌面分析界面](docs/tasks/16-java-desktop-analysis-ui.md)：共享客户端已通过 PR #35 合并；第二阶段桌面操作闭环已本地实现，尚未合并；便携分发留到第三阶段。
 - 桌面界面复用 C++ 核心和 Java 严格报告校验；Vue 网站继续作为后续团队模式入口。
 
 ## License

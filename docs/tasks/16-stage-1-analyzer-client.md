@@ -1,6 +1,6 @@
 # 任务 16 第一阶段：共享分析客户端
 
-日期：2026-11-02。分支：`codex/desktop-local-analysis-ui`。基于 `main` 的 `e6da03e`。状态：第一阶段本地实现与验收通过，尚未合并。
+日期：2026-11-02。分支：`codex/desktop-local-analysis-ui`。基于 `main` 的 `e6da03e`。第一阶段后来已通过 PR #35 合并，合并提交为 `d86a81d`；下文保留当时的本地实施与复审记录，最新阶段进度见 [任务 16](16-java-desktop-analysis-ui.md)。
 
 ## 开工核对
 
@@ -92,4 +92,4 @@ Set-Location .\openpulse-platform
 - 从同一目录执行修正后的包级命令通过，候选 ZIP 路径正确解析，SHA-256 仍为 `3a10dbc5ca4c3fecef0ad5048eb96ef542a1dd748b83d9860dcaf11bc4bfd32d`。
 - 复审差异仅 README 和本阶段记录；检查 diff 后 amend 到第一阶段原提交，不新增阶段提交，不开始桌面界面。
 
-本地详细日志位于忽略目录 `.tools/task16-*.log`，本次入口复验使用 `.tools/task16-docfix-*.log`，不随提交分发。当前完成的是任务 16 第一阶段；第二阶段桌面闭环、第三阶段便携分发尚未实施。本阶段不宣称具备 JavaFX 窗口或便携包。不 push、不创建 PR、不合并、不发布。
+本地详细日志位于忽略目录 `.tools/task16-*.log`，本次入口复验使用 `.tools/task16-docfix-*.log`，不随提交分发。本记录结束时完成的是任务 16 第一阶段，当时第二、三阶段尚未实施，也未 push、创建 PR、合并或发布；后续 PR #35 合并及新阶段进度以上方链接为准。
