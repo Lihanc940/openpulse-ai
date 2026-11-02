@@ -1,10 +1,7 @@
 package io.github.lihanc940.openpulse.integration.analyzer;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.time.Duration;
 
-@ConfigurationProperties("openpulse.analyzer")
 public final class AnalyzerProcessProperties {
 
     private final String executable;

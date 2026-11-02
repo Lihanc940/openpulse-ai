@@ -142,7 +142,7 @@ try {
     $env:PATH = (Join-Path $env:JAVA_HOME 'bin') + [IO.Path]::PathSeparator + $env:PATH
     Push-Location (Join-Path $repositoryRoot 'openpulse-platform')
     try {
-        & $maven '-q' '-Dtest=AnalyzerReportV2ContractTest#c03CompleteProductionCliReportPassesReaderAndSnapshotWhitelist+c04MissingStructureUsesTheProductionCatalogAndFixedIds' "-Dopenpulse.contract.report.dir=$reports" 'test'
+        & $maven '-q' '-f' (Join-Path $repositoryRoot 'pom.xml') '-pl' 'openpulse-platform' '-am' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dtest=AnalyzerReportV2ContractTest#c03CompleteProductionCliReportPassesReaderAndSnapshotWhitelist+c04MissingStructureUsesTheProductionCatalogAndFixedIds' "-Dopenpulse.contract.report.dir=$reports" 'test'
         if ($LASTEXITCODE -ne 0) { throw 'Java Reader rejected packaged v2 reports' }
     } finally { Pop-Location }
     Write-Host "Package verified: $name"

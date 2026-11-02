@@ -4,8 +4,6 @@ import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerStatus;
 import io.github.lihanc940.openpulse.integration.analyzer.model.RiskLevel;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import tools.jackson.core.JacksonException;
 
 import java.nio.file.Path;
@@ -14,13 +12,11 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
 class AnalyzerReportReaderTest {
 
     private static final Path CONTRACTS_DIR = Path.of("src", "test", "resources", "contracts");
 
-    @Autowired
-    private AnalyzerReportReader reader;
+    private AnalyzerReportReader reader = ClientTestSupport.reader();
 
     @Test
     void readsValidAnalyzerReport() {

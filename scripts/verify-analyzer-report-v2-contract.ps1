@@ -489,7 +489,7 @@ try {
     Invoke-Checked 'CTest version' $ctest @('--version') $repositoryRoot
     Invoke-Checked 'Java version' $java @('-version') $repositoryRoot
     Write-Host 'Schema: Draft 2020-12 docs/protocol/analyzer-report-v2.schema.json'
-    [xml]$pom = Get-Content -LiteralPath (Join-Path $platformRoot 'pom.xml') -Raw -Encoding UTF8
+    [xml]$pom = Get-Content -LiteralPath (Join-Path $repositoryRoot 'openpulse-analyzer-client/pom.xml') -Raw -Encoding UTF8
     $schemaValidatorVersion = $pom.project.properties.'json-schema-validator.version'
     Write-Host "Schema validator: com.networknt json-schema-validator $schemaValidatorVersion"
 
@@ -555,7 +555,9 @@ try {
 
     $contractProperty = "-Dopenpulse.contract.report.dir=$reportRoot"
     Invoke-Checked 'C01-C09 Java contract suite' $mavenWrapper @(
-        '-q', '-Dtest=AnalyzerReportV2ContractTest', $contractProperty, 'test') $platformRoot
+        '-q', '-f', (Join-Path $repositoryRoot 'pom.xml'), '-pl', 'openpulse-platform', '-am',
+        '-Dsurefire.failIfNoSpecifiedTests=false',
+        '-Dtest=AnalyzerReportV2ContractTest', $contractProperty, 'test') $platformRoot
 
     $artifactPaths = @()
     foreach ($run in 1..2) {

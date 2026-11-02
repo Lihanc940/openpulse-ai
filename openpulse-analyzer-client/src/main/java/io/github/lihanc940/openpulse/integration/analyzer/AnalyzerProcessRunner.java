@@ -2,7 +2,6 @@ package io.github.lihanc940.openpulse.integration.analyzer;
 
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportDocument;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-@Component
 public class AnalyzerProcessRunner {
 
     private static final String REPORT_FILE_NAME = "report.json";

@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(classes = io.github.lihanc940.openpulse.OpenPulseApplication.class)
 class AnalyzerProcessPropertiesTest {
 
     @Autowired
@@ -30,7 +30,7 @@ class AnalyzerProcessPropertiesTest {
     void bindsSupportedProtocolVersions(String protocolVersion) {
         contextRunner(protocolVersion).run(context -> {
             assertThat(context).hasNotFailed();
-            assertThat(context.getBean(AnalyzerProcessProperties.class).protocolVersion().cliValue())
+            assertThat(context.getBean(AnalyzerPlatformProperties.class).toClientProperties().protocolVersion().cliValue())
                     .isEqualTo(protocolVersion);
         });
     }
@@ -54,7 +54,7 @@ class AnalyzerProcessPropertiesTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @EnableConfigurationProperties(AnalyzerProcessProperties.class)
+    @EnableConfigurationProperties(AnalyzerPlatformProperties.class)
     static class PropertiesConfiguration {
     }
 }
