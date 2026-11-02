@@ -15,7 +15,7 @@ namespace {
 
 const std::set<std::string> SKIP_DIRS = {
     ".git", "node_modules", "target", "build", "dist",
-    ".vs", "out", ".idea", "__pycache__", ".mvn",
+    ".vs", "out", ".idea", "__pycache__", ".mvn", ".tools",
     "bin", "obj"  // C# / VS build outputs
 };
 
@@ -34,6 +34,19 @@ const std::set<std::string> SOURCE_EXTS = {
     ".sql", ".sh", ".bash", ".ps1", ".bat", ".cmd",
     ".lua", ".r", ".pl", ".pm", ".dart", ".zig", ".nim"
 };
+
+const std::set<std::string> BUILD_FILES = {
+    "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle",
+    "CMakeLists.txt", "Makefile", "makefile", "GNUmakefile",
+    "package.json", "Cargo.toml", "go.mod", "requirements.txt",
+    "setup.py", "setup.cfg", "pyproject.toml"
+};
+
+bool isTestDirectory(const std::filesystem::path& path) {
+    auto name = path.filename().string();
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    return name == "test" || name == "tests" || name == "spec" || name == "specs";
+}
 
 // Only programming languages appear in the report's languages array.
 // Markup / config / data languages (Markdown, JSON, YAML, etc.) are counted
@@ -171,6 +184,7 @@ ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
         }
     }
 
+    facts.structure = checkRootStructure(root);
     std::map<std::string, LangStats> langMap;
 
     std::filesystem::recursive_directory_iterator it(root, ec);
@@ -191,7 +205,10 @@ ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
             facts.stats.skippedDirs++;
         } else if (typeEc) {
             recordSkip(facts, root, entryPath, "PERMISSION_DENIED");
+        } else if (isDir) {
+            facts.structure.hasTests = facts.structure.hasTests || isTestDirectory(entryPath);
         } else if (isReg) {
+            const auto relativePath = entryPath.lexically_relative(root);
             std::string ext = lowerExt(entryPath);
             facts.stats.totalFiles++;
 
@@ -203,8 +220,13 @@ ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
                 facts.stats.configFiles++;
             }
 
-            if (isTestFile(entryPath)) {
+            if (isTestFile(relativePath)) {
                 facts.stats.testFiles++;
+                facts.structure.hasTests = true;
+            }
+            if (BUILD_FILES.count(entryPath.filename().string()) > 0) {
+                const auto utf8Path = relativePath.generic_u8string();
+                facts.structure.buildFiles.emplace_back(utf8Path.begin(), utf8Path.end());
             }
 
             std::string lang = languageFromExt(ext);
@@ -213,7 +235,7 @@ ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
             ls.files++;
 
             // Count lines with comment-style detection
-            std::ifstream file(entryPath.string());
+            std::ifstream file(entryPath);
             if (file.is_open()) {
                 std::string line;
                 bool inBlock = false;  // inside /* */ block comment
@@ -334,7 +356,7 @@ ScanFacts Analyzer::collectFacts(const std::filesystem::path& root) const {
     for (auto& [name, ls] : langMap) {
         facts.languages.push_back(std::move(ls));
     }
-    facts.structure = checkStructure(root);
+    std::sort(facts.structure.buildFiles.begin(), facts.structure.buildFiles.end());
     return facts;
 }
 
@@ -358,8 +380,6 @@ bool Analyzer::isConfigFile(const std::string& ext) const {
 }
 
 bool Analyzer::isTestFile(const std::filesystem::path& path) const {
-    auto p = path.string();
-    std::transform(p.begin(), p.end(), p.begin(), ::tolower);
     // Heuristic: filename or enclosing directory starts / ends with "test" or "spec"
     for (auto it = path.begin(); it != path.end(); ++it) {
         std::string seg = it->string();
@@ -397,6 +417,10 @@ std::vector<LangStats> Analyzer::detectLanguages(const std::filesystem::path& ro
 // --- Structure checks ---
 
 StructureCheck Analyzer::checkStructure(const std::filesystem::path& root) const {
+    return collectFacts(root).structure;
+}
+
+StructureCheck Analyzer::checkRootStructure(const std::filesystem::path& root) const {
     StructureCheck check;
     std::error_code ec;
 
@@ -428,20 +452,6 @@ StructureCheck Analyzer::checkStructure(const std::filesystem::path& root) const
             check.hasCi = true;
         }
 
-        // Build files
-        static const std::set<std::string> BUILD_FILES = {
-            "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle",
-            "CMakeLists.txt", "Makefile", "makefile", "GNUmakefile",
-            "package.json", "Cargo.toml", "go.mod", "requirements.txt",
-            "setup.py", "setup.cfg", "pyproject.toml"
-        };
-        if (BUILD_FILES.count(name) > 0) {
-            check.buildFiles.push_back(name);
-        }
-
-        // Test directory
-        if (entry.is_directory(ec) && (lower == "test" || lower == "tests" || lower == "spec"))
-            check.hasTests = true;
     }
 
     return check;

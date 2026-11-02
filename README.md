@@ -91,6 +91,12 @@ Java 负责人已完成：
 
 Windows x64 本地 CLI 分发说明提供[中文使用指南](docs/windows-x64-cli.zh-CN.md)和[英文使用指南](docs/windows-x64-cli.md)；维护者构建与验收流程见 [Windows x64 分发基线](docs/windows-x64-distribution-build.md)。
 
+2026-11-02 真实试用后的工作顺序：
+
+- [任务 15：多模块结构识别修复](docs/tasks/15-analyzer-monorepo-fix.md)：准备 0.2.2 补丁，修正子模块测试/构建文件识别并补充中文终端说明；候选包不等于已公开发布。
+- [任务 16：Windows 桌面分析界面](docs/tasks/16-java-desktop-analysis-ui.md)：下一项 Java 任务，采用 JavaFX，提供选择目录、点击分析、查看发现和保存报告的本地操作闭环。
+- 桌面界面复用 C++ 核心和 Java 严格报告校验；Vue 网站继续作为后续团队模式入口。
+
 ## License
 
 OpenPulse AI is licensed under the [MIT License](LICENSE).

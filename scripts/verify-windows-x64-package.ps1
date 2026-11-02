@@ -97,6 +97,23 @@ try {
     Invoke-Analyzer $exe @('--protocol', '2.0', '--summary', '--path', $spaceRepo, '--output', $spaceReport) 0 | Out-Null
     if (-not (Test-Path -LiteralPath $spaceReport)) { throw 'Space-containing report path failed' }
 
+    $monorepo = Join-Path $temporaryRoot 'monorepo with spaces'
+    foreach ($relative in @('platform/pom.xml', 'platform/src/test/java/ServiceTest.java',
+        'analyzer/CMakeLists.txt', 'analyzer/tests/scanner.cpp',
+        '.tools/fixture/pom.xml', '.tools/fixture/tests/Test.java')) {
+        $file = Join-Path $monorepo $relative
+        New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($file)) -Force | Out-Null
+        [IO.File]::WriteAllText($file, "fixture`n", [Text.UTF8Encoding]::new($false))
+    }
+    $monorepoReport = Join-Path $reports 'monorepo.v2.json'
+    Invoke-Analyzer $exe @('--protocol', '2.0', '--path', $monorepo, '--output', $monorepoReport) 0 | Out-Null
+    $document = Get-Content -LiteralPath $monorepoReport -Raw -Encoding UTF8 | ConvertFrom-Json
+    if (-not $document.structure.hasTests -or $document.summary.testFiles -ne 2 -or
+        $document.summary.totalFiles -ne 4 -or
+        [string]::Join('|', $document.structure.buildFiles) -cne 'analyzer/CMakeLists.txt|platform/pom.xml') {
+        throw 'Packaged monorepo structure or exclusion check failed'
+    }
+
     Invoke-Analyzer $exe @('--protocol', '1.0', '--summary', '--path', $complete, '--output', (Join-Path $reports 'invalid.json')) 1 | Out-Null
     Invoke-Analyzer $exe @('--protocol', '9.9', '--path', $complete, '--output', (Join-Path $reports 'invalid.json')) 1 | Out-Null
     Invoke-Analyzer $exe @('--protocol') 1 | Out-Null
