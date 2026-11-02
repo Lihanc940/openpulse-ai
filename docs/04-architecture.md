@@ -51,7 +51,7 @@ JavaFX 选择目录 -> 后台共享 Java 进程客户端 -> C++ 分析器
 
 第二阶段桌面代码分为界面 `AnalysisWorkspace`、应用服务 `DesktopAnalysisService` 和报告文件适配 `ReportFiles`。应用服务一次只协调一个后台操作，通过界面线程派发结果；取消和关闭复用 Runner 的线程中断、进程树终止与临时目录清理。导入和导出均经过同一严格 Reader，界面不会重新实现解析或规则。项目路径与分析历史不持久化，只有用户选择导出时保存报告。学习与启动入口见 [桌面开发指南](desktop-development.zh-CN.md)，验收边界见 [第二阶段记录](tasks/16-stage-2-desktop-workflow.md)。
 
-第二阶段提供需要 JDK 21 的开发窗口，不启动服务器或数据库。第三阶段计划通过 `jpackage --type app-image` 捆绑 Java 运行环境和分析器，首先交付 Windows x64 ZIP 便携包；该分发阶段尚未实施。
+第二阶段已通过 PR #36 合并。第三阶段以 `jlink` 将 Java 21 和 OpenJFX base/graphics/controls 链接为私有运行环境，再用 `jpackage --type app-image` 生成 Windows x64 应用目录并压成候选 ZIP。`OpenPulse.exe` 使用包内 `runtime/`；主 JAR 位于 `app/`，桌面沿用 JAR 所在目录定位 `app/bin/openpulse-analyzer.exe`，不需要开发路径或系统 PATH。随包没有 Platform、Spring、数据库驱动或编译器。`java.sql` 是依赖类型需要的标准 Java 模块，不代表捆绑或启动数据库。实际依赖、许可证与哈希随包记录；候选状态和验收边界见 [第三阶段记录](tasks/16-stage-3-windows-portable.md)。
 
 ### 2. AI Skill 使用
 

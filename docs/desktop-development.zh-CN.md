@@ -1,6 +1,6 @@
 # Windows 桌面客户端开发与演示
 
-当前提供任务 16 第二阶段的开发窗口。第三阶段便携包尚未制作，运行本入口需要 Windows x64、JDK 21 和 Maven Wrapper 能下载的构建依赖；首次构建需要联网下载，依赖缓存完整后可离线构建。分析和报告导入导出均在本地执行。
+开发入口需要 Windows x64、JDK 21 和 Maven Wrapper 能下载的构建依赖；首次构建需要联网，缓存完整后可离线构建。使用者可以改用第三阶段的本地候选便携包，见 [中文使用说明](windows-x64-desktop.zh-CN.md)，不需要开发环境。候选包尚未公开发布。分析和报告导入导出均在本地执行。
 
 ## 先理解三层职责
 
@@ -51,4 +51,42 @@ Set-Location .\openpulse-platform
 
 没有分析历史、路径持久化、自动更新、AI 调用、数据库或网站。打开报告不会自动改写当前项目路径；重新分析仍以路径框为准，尤其在导入别的项目报告后请重新选择项目。
 
-本阶段开发窗口不能替代“无外置 JDK、无开发工具、解压后双击”的包级验收。运行环境捆绑、许可证随包交付及 app-image/ZIP 冒烟验收留到第三阶段。
+开发窗口与包级验收分开记录。第三阶段结果见 [Windows x64 便携分发验收](tasks/16-stage-3-windows-portable.md)。
+
+## 维护者制作 Windows x64 候选包
+
+`app-image` 是含原生启动 exe、应用和私有运行环境的目录；ZIP 只压缩这个目录，不是安装器。`jlink` 裁剪并链接运行环境，`jpackage` 创建启动器。运行环境捆绑让使用者无需另装 Java。候选包只表示本地待复审产物，不等于公开 Release。
+
+官方要求已核对：[JDK 21 打包概览](https://docs.oracle.com/en/java/javase/21/jpackage/packaging-overview.html)、[jpackage 参数](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jpackage.html)、[OpenJFX 构建文档](https://openjfx.io/openjfx-docs/)、[JavaFX 下载](https://gluonhq.com/products/javafx/)。Windows 镜像在 Windows 构建；这里只用 `--type app-image`，无需用于 MSI/EXE 安装器的 WiX。JavaFX 21 的最低 JDK 要求为 17，与本项目 JDK 21 兼容。
+
+准备 Windows x64 PowerShell 7、Eclipse Temurin JDK 21（本次 21.0.11+10）、已验收的 0.2.2 CLI ZIP，以及 [OpenJFX 21.0.13 Windows x64 jmods](https://download2.gluonhq.com/openjfx/21.0.13/openjfx-21.0.13_windows-x64_bin-jmods.zip)。解压 jmods，参数指向含 `javafx.base.jmod`、`javafx.graphics.jmod`、`javafx.controls.jmod` 的目录。工具是构建前提，不是用户启动前提。上游源码和实际许可见 [依赖说明](../openpulse-desktop/THIRD_PARTY_NOTICES.md)。
+
+下面从仓库根目录运行；打包脚本内部进入 `openpulse-platform` 调用 Wrapper，不需要设置 MAVEN_BASEDIR：
+
+```powershell
+pwsh -File .\scripts\build-windows-x64-desktop.ps1 `
+  -AnalyzerPackage .\openpulse-analyzer\out\windows-x64\openpulse-analyzer-0.2.2-windows-x64.zip `
+  -JavaFxJmods "C:\依赖\javafx-jmods-21.0.13" `
+  -JavaHome "C:\你的 Temurin JDK 21"
+
+pwsh -File .\scripts\verify-windows-x64-desktop.ps1 `
+  -PackagePath .\openpulse-desktop\out\windows-x64\OpenPulse-0.2.2-candidate.1-windows-x64.zip `
+  -OutputDirectory "$PWD\.tools\新的 中文验收目录" `
+  -JavaHome "C:\你的 Temurin JDK 21"
+```
+
+验收目标目录必须不存在。脚本核对 ZIP/包内哈希、依赖清单、许可证、相对启动路径和私有模块，再以仅有 Windows System32 的子进程 PATH 验证真实分析、严格读写和 CLI v2 事实比较。维护者 JDK 只编译不随包的验收探针；运行探针使用包内 Java。随后必须单独做真实窗口验收，脚本成功不代表双击或离线新机已验证。
+
+先在资源管理器实际双击新解压的 `OpenPulse.exe` 并关闭，再从仓库根目录启动环境隔离观察，手工完成选择、分析、取消、导出、重开与关闭。以下命令保持运行直到关闭窗口，证据目录必须是新目录：
+
+```powershell
+pwsh -File .\scripts\qa\start-isolated-desktop.ps1 `
+  -ImageDirectory "$PWD\.tools\新的 中文验收目录\OpenPulse" `
+  -EvidenceDirectory "$PWD\.tools\新的 中文验收目录\qa\窗口隔离"
+```
+
+观察器记录启动器及承载 JVM 的子进程，采集包内 DLL/分析器路径和退出后的残留情况。网络端点只作采样观察，不能当作断网证明；不要为此卸载工具或修改系统网络。包级自动结果、窗口截图和未验证环境分别记录。
+
+构建脚本核对 `openpulse-desktop/distribution/portable-inputs.json` 中的 CLI/JMOD 哈希；升级版本、依赖或 JDK 厂商前先复审清单及许可。它运行共享客户端和桌面的完整测试，使用精确清单拒绝意外新增运行依赖。JavaFX 原生库由 JMOD 链入 `runtime/bin/javafx/`，不会依赖用户缓存或 SDK。JAR 固定时间戳、ZIP 固定排序/时间戳；可重复执行不承诺跨 JDK/跨机器字节相同。
+
+产物位于忽略的 `openpulse-desktop/out/windows-x64/`；失败会移除本轮同名 ZIP/校验文件，临时构建目录仅在校验为本脚本创建的路径后删除。包含 `VERSION.json`（主线基点、工作区状态、工具链、模块及分析器哈希）、`FILES.sha256`、中文说明及实际许可。保留所有说明和许可一起交付，不提交产物，不自动 push、创建 PR 或发布。

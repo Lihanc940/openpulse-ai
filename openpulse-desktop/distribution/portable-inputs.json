@@ -1,0 +1,24 @@
+{
+  "version": "0.2.2-candidate.1",
+  "appVersion": "0.2.2",
+  "javafxVersion": "21.0.13",
+  "javafxSource": "https://download2.gluonhq.com/openjfx/21.0.13/openjfx-21.0.13_windows-x64_bin-jmods.zip",
+  "javafxModules": {
+    "javafx.base.jmod": "faa107904687a7ab8d20657dd655e2028fc19fd13af2fa049642c96ead69a4eb",
+    "javafx.controls.jmod": "54ed4d888289b322d130103da1e2ea039d1b82ab3c427ce451d128e5177598cb",
+    "javafx.graphics.jmod": "274a553b44b6ed2931714d0a168cc3be9aa6d9fae6e14c836206636e379dfbbb"
+  },
+  "analyzerVersion": "0.2.2",
+  "analyzerArchiveSha256": "3a10dbc5ca4c3fecef0ad5048eb96ef542a1dd748b83d9860dcaf11bc4bfd32d",
+  "libraries": [
+    {"file":"openpulse-analyzer-client-0.1.0-SNAPSHOT.jar","license":"MIT","source":"https://github.com/Lihanc940/openpulse-ai"},
+    {"file":"json-schema-validator-3.0.6.jar","license":"Apache-2.0","source":"https://github.com/networknt/json-schema-validator"},
+    {"file":"itu-1.14.0.jar","license":"Apache-2.0","source":"https://github.com/ethlo/itu"},
+    {"file":"jackson-dataformat-yaml-3.1.4.jar","license":"Apache-2.0","source":"https://github.com/FasterXML/jackson-dataformats-text"},
+    {"file":"snakeyaml-engine-3.0.1.jar","license":"Apache-2.0","source":"https://bitbucket.org/snakeyaml/snakeyaml-engine"},
+    {"file":"slf4j-api-2.0.17.jar","license":"MIT","source":"https://www.slf4j.org/license.html"},
+    {"file":"jackson-databind-3.1.4.jar","license":"Apache-2.0","source":"https://github.com/FasterXML/jackson-databind"},
+    {"file":"jackson-annotations-2.21.jar","license":"Apache-2.0","source":"https://github.com/FasterXML/jackson-annotations"},
+    {"file":"jackson-core-3.1.4.jar","license":"Apache-2.0","source":"https://github.com/FasterXML/jackson-core"}
+  ]
+}
