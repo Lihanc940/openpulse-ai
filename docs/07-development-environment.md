@@ -145,6 +145,12 @@ cmake --version
 
 ## 前端开始时再统一
 
+### 下一项 Windows 桌面任务
+
+2026-11-02 的任务 16 采用 Java 21 / JavaFX，本地开发复用现有 JDK 21 和 Maven；JavaFX 依赖由 Maven 固定版本并下载。Windows app-image 使用 JDK 的 jpackage 构建，包内附带运行环境和分析器，最终用户无需安装 JDK。
+
+先不为任务 16 安装 Node、Rust 或桌面壳框架。下面 Node.js 一节继续适用于后续 Vue 团队网站，而不是当前桌面任务。详细步骤见 `docs/tasks/16-java-desktop-analysis-ui.md`。
+
 ### Node.js LTS
 
 用途：运行 Vue 构建工具和前端依赖。
