@@ -3,7 +3,6 @@ package io.github.lihanc940.openpulse.integration.analyzer;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReport;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportDocument;
 import io.github.lihanc940.openpulse.integration.analyzer.model.AnalyzerReportV2;
-import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
@@ -17,7 +16,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 
-@Component
 public class AnalyzerReportReader {
 
     public static final long MAX_REPORT_BYTES = 16L * 1024 * 1024;

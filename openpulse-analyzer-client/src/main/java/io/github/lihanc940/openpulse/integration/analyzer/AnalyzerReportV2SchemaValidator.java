@@ -6,14 +6,12 @@ import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SchemaRegistryConfig;
 import com.networknt.schema.SpecificationVersion;
-import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-@Component
 public class AnalyzerReportV2SchemaValidator {
 
     public static final String SCHEMA_RESOURCE = "/schemas/analyzer-report-v2.schema.json";

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +22,6 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-@SpringBootTest
 class AnalyzerProcessRunnerTest {
 
     private static final Pattern DESCENDANT_PID_PATTERN = Pattern.compile("descendant-pid=(\\d+)");
@@ -32,8 +29,7 @@ class AnalyzerProcessRunnerTest {
     @TempDir
     Path testDirectory;
 
-    @Autowired
-    AnalyzerReportReader reportReader;
+    AnalyzerReportReader reportReader = ClientTestSupport.reader();
 
     @Test
     void executesAnalyzerForRepositoryPathWithSpacesAndCleansWorkDirectory() throws Exception {

@@ -47,7 +47,7 @@ JavaFX 选择目录 -> 后台共享 Java 进程客户端 -> C++ 分析器
               <- 界面展示 <- 同一严格 Reader <- v2 JSON
 ```
 
-采用 Java 21 和 JavaFX，新建 `openpulse-desktop`。先把必要 Reader/进程能力抽成不依赖 Web 或数据库的 `openpulse-analyzer-client`，供桌面与 Platform 复用。桌面客户端按协议 2.0 调用分析器，不依赖终端摘要编码；报告展示使用中文普通文本。
+采用 Java 21 和 JavaFX，计划新建 `openpulse-desktop`。任务 16 第一阶段已把必要 Reader/进程能力迁入不依赖 Spring、Web 或数据库的 `openpulse-analyzer-client`，供桌面与 Platform 复用；保留原 Java 包名。Platform 通过 `AnalyzerPlatformProperties` 绑定配置，通过 `AnalyzerClientConfiguration` 注册共享类，默认仍请求 v1。桌面客户端将在第二阶段显式按协议 2.0 调用分析器，不依赖终端摘要编码；报告展示使用中文普通文本。阶段验收和构建入口见 [第一阶段记录](tasks/16-stage-1-analyzer-client.md)。
 
 通过 `jpackage --type app-image` 捆绑 Java 运行环境和分析器，首先交付 Windows x64 ZIP 便携包。用户无需启动服务器或安装数据库。初版只支持本地目录、单次分析和报告导入导出；此处记录计划，不代表桌面软件已经实现。
 

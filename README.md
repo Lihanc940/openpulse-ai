@@ -31,10 +31,11 @@ P1 Java/C++ 本地协作闭环已经完成，GitHub URL 解析、公开仓库元
 
 ## 推荐仓库结构
 
-当前使用一个总仓库管理三个子项目：
+当前使用一个总仓库管理本地核心、共享客户端和团队模式模块：
 
 ```text
 Openpulse AI/
+  openpulse-analyzer-client/  无 Spring 的 Java 严格 Reader 和进程客户端
   openpulse-platform/   Java 编排、持久化和后续团队服务
   openpulse-analyzer/   C++20 本地分析核心
   openpulse-web/        后续团队模式的 Vue 3 前端
@@ -43,6 +44,19 @@ Openpulse AI/
 ```
 
 当前采用单仓库和模块化 Java 后端。只有出现明确的独立发布或扩容需求时，才考虑拆分服务或仓库。
+
+Java 聚合构建入口为根目录 `pom.xml`，但 Maven Wrapper 及其 `.mvn` 配置位于 `openpulse-platform`。使用 Java 21，先从仓库根目录进入该目录，后续命令均在该目录运行：
+
+```powershell
+Set-Location .\openpulse-platform
+.\mvnw.cmd -f ..\pom.xml clean test
+# 等价的 Platform 验证入口：同时构建它依赖的共享客户端
+.\mvnw.cmd -f ..\pom.xml -pl openpulse-platform -am clean verify
+# 共享库可以独立验证，不启动 Spring 或数据库
+.\mvnw.cmd -f ..\openpulse-analyzer-client\pom.xml clean test
+```
+
+`verify` 还运行 Platform 的 MySQL/Testcontainers 集成测试，需要可用的 Docker。优先使用上面的聚合入口，避免引用本机缓存的旧共享库。这些命令无需设置 `MAVEN_BASEDIR`。任务 16 第一阶段的边界、学习入口和验收记录见 [共享客户端阶段记录](docs/tasks/16-stage-1-analyzer-client.md)。
 
 ## 工程约定
 

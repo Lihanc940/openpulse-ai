@@ -8,8 +8,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -27,7 +25,6 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
 class AnalyzerReportV2ReaderTest {
 
     private static final Path DOCS_EXAMPLES = Path.of("..", "docs", "examples");
@@ -36,14 +33,11 @@ class AnalyzerReportV2ReaderTest {
     private static final Path V1 = Path.of("src", "test", "resources", "contracts",
             "analyzer-report-v1.sample.json");
 
-    @Autowired
-    AnalyzerReportReader reader;
+    AnalyzerReportReader reader = ClientTestSupport.reader();
 
-    @Autowired
-    AnalyzerReportV2SemanticValidator semanticValidator;
+    AnalyzerReportV2SemanticValidator semanticValidator = new AnalyzerReportV2SemanticValidator(new ObjectMapper());
 
-    @Autowired
-    ObjectMapper objectMapper;
+    ObjectMapper objectMapper = new ObjectMapper();
 
     @TempDir
     Path temporaryDirectory;
