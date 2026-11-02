@@ -10,7 +10,7 @@
       "expectedReviewability": "COMPLETE",
       "expectedRuleIds": [],
       "normalizedGolden": "expected/complete.v2.normalized.json",
-      "normalizedSha256": "62f3b7b75fac6e5e9cf2651467f2101265a2eb29fbc6f50f799a633f97ea5d61"
+      "normalizedSha256": "2688c904a98b6b7eac69a02a76045d24beb3948bdf64a14a60a7d05077c01a3d"
     },
     {
       "id": "missing-structure",
@@ -21,7 +21,7 @@
       "expectedReviewability": "COMPLETE",
       "expectedRuleIds": ["MISSING_LICENSE", "MISSING_CI", "MISSING_README"],
       "normalizedGolden": "expected/missing-structure.v2.normalized.json",
-      "normalizedSha256": "af86996b08270be298dfed89cc4e36ec6bb59a64c109fdd5727767ee4e2e4075"
+      "normalizedSha256": "7aa92962c5ef0bbc8c649b971a8e45b71df71185b3affaa2a4856206e78fae57"
     },
     {
       "id": "partial-success",
@@ -32,7 +32,7 @@
       "expectedReviewability": "PARTIAL",
       "expectedRuleIds": [],
       "normalizedGolden": "expected/partial-success.v2.normalized.json",
-      "normalizedSha256": "ba5d6d513ecd0875478e3608ffb8366319318324d3a405015b6d337093db95b3"
+      "normalizedSha256": "c19e3b0124e23e48bfff986cd6380a2dd7cfecc0a7fb88e5b8ffda27b561c28b"
     },
     {
       "id": "failed",
@@ -43,7 +43,7 @@
       "expectedReviewability": "NOT_USABLE",
       "expectedRuleIds": [],
       "normalizedGolden": "expected/failed.v2.normalized.json",
-      "normalizedSha256": "be7cdb80a797198b66cb1134af003de534d4df9974c6c5a012835e607a0a31fe"
+      "normalizedSha256": "271bb79e1dbc8c066e024b63e67fe263d664f52e4e622dca662d1087082f83a3"
     }
   ]
 }

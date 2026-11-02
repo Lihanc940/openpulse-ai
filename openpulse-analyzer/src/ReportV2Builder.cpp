@@ -124,6 +124,9 @@ nlohmann::json ReportV2Builder::build(const ScanFacts& facts,
 
     // --- structure: build files sorted by path, duplicates rejected ---
     std::vector<std::string> buildFiles = facts.structure.buildFiles;
+    if (buildFiles.size() > 1024) {
+        throw ReportConstructionError("too many build files for protocol v2");
+    }
     for (const auto& bf : buildFiles) {
         if (!isSafeRelativePath(bf)) {
             throw ReportConstructionError("unsafe build file path: " + bf);

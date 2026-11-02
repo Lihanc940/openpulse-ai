@@ -2,30 +2,32 @@
 
 OpenPulse Analyzer 是一个在本机运行的仓库结构分析命令行工具。当前版本会检查 README、许可证和 CI 等项目基础结构，并生成透明的 JSON 报告。运行时不需要账号、网站、Java、CMake 或 Visual Studio，也不会上传你的仓库。
 
+本文随 0.2.2 补丁候选包更新；正式可下载版本以 GitHub Releases 为准。旧版 0.2.1 不包含多模块识别修复，更新源码不会自动更新已经下载的 exe。
+
 英文使用指南：发布包内的 `README.md`；仓库中的[英文源文档](https://github.com/Lihanc940/openpulse-ai/blob/main/docs/windows-x64-cli.md)。
 
 ## 1. 下载并校验文件
 
 从项目的官方 GitHub Releases 页面下载以下两个相邻文件：
 
-- `openpulse-analyzer-0.2.1-windows-x64.zip`
-- `openpulse-analyzer-0.2.1-windows-x64.zip.sha256`
+- `openpulse-analyzer-0.2.2-windows-x64.zip`
+- `openpulse-analyzer-0.2.2-windows-x64.zip.sha256`
 
 把两个文件放在同一目录，在该目录打开 PowerShell，执行：
 
 ```powershell
-Get-FileHash .\openpulse-analyzer-0.2.1-windows-x64.zip -Algorithm SHA256
-Get-Content .\openpulse-analyzer-0.2.1-windows-x64.zip.sha256
+Get-FileHash .\openpulse-analyzer-0.2.2-windows-x64.zip -Algorithm SHA256
+Get-Content .\openpulse-analyzer-0.2.2-windows-x64.zip.sha256
 ```
 
 比较两条命令显示的 64 位十六进制哈希值。完全一致表示下载后的 ZIP 内容没有发生变化。SHA-256 只能校验文件完整性，不等同于数字签名，也不能单独证明发布者身份。
 
 ## 2. 解压和安装
 
-把 ZIP 解压到你选择的版本目录，例如 `C:\Tools\openpulse-analyzer-0.2.1`。压缩包内已经有同名根目录，解压后应能看到：
+把 ZIP 解压到你选择的目录，例如 `C:\Tools`。压缩包内已经有版本根目录，解压后应能看到：
 
 ```text
-openpulse-analyzer-0.2.1/
+openpulse-analyzer-0.2.2/
   bin/openpulse-analyzer.exe
   README.md
   README.zh-CN.md
@@ -38,13 +40,22 @@ openpulse-analyzer-0.2.1/
 
 ## 3. 第一次运行
 
-先创建报告输出目录：
+在文件资源管理器中打开解压后的版本目录，在地址栏输入 `powershell` 并回车。程序通过终端使用；双击 exe 后窗口一闪而过不能表示分析成功。
+
+旧版 Windows PowerShell 先设置当前窗口使用 UTF-8，避免中文摘要乱码：
 
 ```powershell
-New-Item -ItemType Directory -Force -Path "C:\OpenPulseReports"
+chcp 65001
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 ```
 
-进入解压后的 `openpulse-analyzer-0.2.1` 目录，先查看帮助：
+这些设置只用于本次终端会话，不要求修改系统区域设置。然后创建报告输出目录：
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\OpenPulseReports"
+```
+
+进入解压后的 `openpulse-analyzer-0.2.2` 目录，先查看帮助：
 
 ```powershell
 .\bin\openpulse-analyzer.exe --help
@@ -53,7 +64,7 @@ New-Item -ItemType Directory -Force -Path "C:\OpenPulseReports"
 然后分析一个本地仓库。路径中有空格或中文时也要保留双引号：
 
 ```powershell
-.\bin\openpulse-analyzer.exe --protocol 2.0 --summary --path "C:\我的项目\示例仓库" --output "C:\OpenPulseReports\示例仓库-report.json"
+.\bin\openpulse-analyzer.exe --protocol 2.0 --summary --path "C:\我的项目\示例仓库" --output "$env:USERPROFILE\OpenPulseReports\示例仓库-report.json"
 ```
 
 参数含义：
@@ -74,6 +85,14 @@ New-Item -ItemType Directory -Force -Path "C:\OpenPulseReports"
 
 报告中的每个发现项都应有明确的规则标识和证据。当前工具只检查项目结构，不会读取代码语义后给出模糊的“健康分”。
 
+`SUCCESS` 表示本次扫描完成；`COMPLETE` 表示没有记录扫描限制，不代表代码没有缺陷。`Findings: 0` 也只表示没有命中当前已有的规则。
+
+从 0.2.2 起，`structure.hasTests` 识别扫描范围内各子模块的测试目录（`test/tests/spec/specs`）或测试文件；这是名称启发式判断，不证明测试能通过或覆盖充分。`structure.buildFiles` 列出实际扫描到的已识别构建文件，路径相对于所选项目目录，按路径排序；同名目录不算构建文件。
+
+构建输出、依赖和开发缓存目录（包括 `.git`、`node_modules`、`target`、`build`、`out`、`.tools` 等）不计入扫描。README、许可证和 CI 仍按仓库根目录判断，子模块有这些文件不能代替整个仓库的说明和配置。`MISSING_CI` 表示未找到受支持的配置路径，不代表运行过 CI。
+
+协议 v2 最多接受 1024 个构建文件；超过上限时分析失败并返回非零退出码，不会静默截断列表或伪装成完整扫描。
+
 退出码可用于判断命令是否成功：
 
 | 退出码 | 含义 |
@@ -85,6 +104,10 @@ New-Item -ItemType Directory -Force -Path "C:\OpenPulseReports"
 | `4` | 报告写入失败 |
 
 ## 5. 常见问题
+
+### 中文摘要乱码，但 JSON 正常
+
+按照“第一次运行”设置 UTF-8 后重新执行分析。用 `Get-Content -Raw -Encoding UTF8` 读取报告可以核对原文。新开旧版 PowerShell 窗口后可能需要再次设置编码。
 
 ### 提示仓库路径无效
 

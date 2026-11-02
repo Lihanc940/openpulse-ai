@@ -64,7 +64,7 @@ const std::regex kSemver(
 
 void test_versionInjection() {
     TEST(std::string(OPENPULSE_ANALYZER_NAME) == "openpulse-analyzer");
-    TEST(std::string(OPENPULSE_ANALYZER_VERSION) == "0.2.1");
+    TEST(std::string(OPENPULSE_ANALYZER_VERSION) == "0.2.2");
     TEST(std::regex_match(OPENPULSE_ANALYZER_VERSION, kSemver));
 
     openpulse::Analyzer a;
@@ -258,6 +258,24 @@ void test_sorting() {
 
     TEST(report["status"] == "SUCCESS");
     TEST(report["findings"].empty());
+}
+
+void test_buildFileCountBound() {
+    openpulse::ScanFacts facts;
+    for (std::size_t i = 0; i < 1024; ++i) {
+        facts.structure.buildFiles.push_back("module-" + std::to_string(i) + "/pom.xml");
+    }
+    openpulse::ReportV2Builder builder;
+    auto report = builder.build(facts, "repo", "task_test", "2026-09-25T12:00:00Z");
+    TEST(report["structure"]["buildFiles"].size() == 1024);
+    facts.structure.buildFiles.push_back("overflow/pom.xml");
+    bool rejected = false;
+    try {
+        builder.build(facts, "repo", "task_test", "2026-09-25T12:00:00Z");
+    } catch (const openpulse::ReportConstructionError&) {
+        rejected = true;
+    }
+    TEST(rejected);
 }
 
 void test_noMachinePaths(const fs::path& fixture) {
@@ -463,6 +481,7 @@ int main() {
     test_successReport(fixture);
     test_repositoryFindingsShape();
     test_sorting();
+    test_buildFileCountBound();
     test_noMachinePaths(fixture);
     test_determinism(fixture);
     test_partialSuccess();

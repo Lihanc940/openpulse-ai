@@ -84,6 +84,7 @@ private:
     FileStats scanDirectory(const std::filesystem::path& root) const;
     std::vector<LangStats> detectLanguages(const std::filesystem::path& root) const;
     StructureCheck checkStructure(const std::filesystem::path& root) const;
+    StructureCheck checkRootStructure(const std::filesystem::path& root) const;
 
     // Helpers
     bool shouldSkipDir(const std::filesystem::path& dir) const;

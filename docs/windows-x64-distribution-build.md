@@ -12,7 +12,7 @@ From the repository root:
 
 ```powershell
 .\scripts\build-windows-x64-package.ps1
-.\scripts\verify-windows-x64-package.ps1 -PackagePath .\openpulse-analyzer\out\windows-x64\openpulse-analyzer-0.2.1-windows-x64.zip -JavaHome 'C:\path\to\jdk-21'
+.\scripts\verify-windows-x64-package.ps1 -PackagePath .\openpulse-analyzer\out\windows-x64\openpulse-analyzer-0.2.2-windows-x64.zip -JavaHome 'C:\path\to\jdk-21'
 ```
 
 When GitHub is unavailable, an already verified local source checkout can be supplied explicitly:
