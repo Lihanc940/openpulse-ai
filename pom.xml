@@ -10,5 +10,6 @@
     <modules>
         <module>openpulse-analyzer-client</module>
         <module>openpulse-platform</module>
+        <module>openpulse-desktop</module>
     </modules>
 </project>
