@@ -1,0 +1,77 @@
+{
+  "formatVersion": "task16-stage3-local-evidence@1",
+  "date": "2026-11-02",
+  "candidateSha256": "3e22ecc037d82218c7e59f0df37046dbfec9585932dc39f341ba0f75acb695ec",
+  "automated": {
+    "zipSha256": "3e22ecc037d82218c7e59f0df37046dbfec9585932dc39f341ba0f75acb695ec",
+    "inventoryFiles": 251,
+    "image": "<EXTRACT_DIR>\\OpenPulse",
+    "fixture": "<EXTRACT_DIR>\\中文 项目",
+    "runtimeModules": [
+      "java.base@21.0.11",
+      "java.datatransfer@21.0.11",
+      "java.desktop@21.0.11",
+      "java.logging@21.0.11",
+      "java.prefs@21.0.11",
+      "java.sql@21.0.11",
+      "java.transaction.xa@21.0.11",
+      "java.xml@21.0.11",
+      "javafx.base@21.0.13",
+      "javafx.controls@21.0.13",
+      "javafx.graphics@21.0.13",
+      "jdk.crypto.ec@21.0.11",
+      "jdk.unsupported@21.0.11"
+    ],
+    "classPath": "<EXTRACT_DIR>\\OpenPulse\\app\\*;<EXTRACT_DIR>\\qa\\classes",
+    "strictReader": true,
+    "realAnalyzer": true,
+    "cliFactsEqual": true,
+    "environment": "Child PATH=Windows/System32; Java/JDK/Maven options removed; TEMP private; dead proxy environment",
+    "limitation": "OS network not disabled; proxy environment is not a network firewall; fresh Windows VM not tested",
+    "windowAcceptance": "Separate real-window acceptance required"
+  },
+  "windowProcess": {
+    "image": "<EXTRACT_DIR>\\OpenPulse",
+    "pid": 31264,
+    "exitCode": 0,
+    "samples": 71,
+    "path": "C:\\WINDOWS\\System32",
+    "externalJavaVariablesRemoved": true,
+    "privateTemp": "<EXTRACT_DIR>\\qa\\isolated-window-2\\temp",
+    "emptyApplicationData": "<EXTRACT_DIR>\\qa\\isolated-window-2\\empty-profile",
+    "nativeModules": [
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\java.dll",
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\javafx\\glass.dll",
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\javafx\\prism_d3d.dll",
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\jimage.dll",
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\jli.dll",
+      "<EXTRACT_DIR>\\OpenPulse\\runtime\\bin\\server\\jvm.dll"
+    ],
+    "appProcessIds": [
+      "36772",
+      "31264"
+    ],
+    "remainingApplicationProcesses": [],
+    "analyzerProcesses": [
+      {
+        "pid": 7852,
+        "path": "<EXTRACT_DIR>\\OpenPulse\\app\\bin\\openpulse-analyzer.exe",
+        "commandLine": "\"<EXTRACT_DIR>\\OpenPulse\\app\\bin\\openpulse-analyzer.exe\" --protocol 2.0 --path \"<EXTRACT_DIR>\\qa\\慢速 真实项目\" --output \"<EXTRACT_DIR>\\qa\\isolated-window-2\\temp\\openpulse-analyzer-3224183278813216767\\report.json\""
+      },
+      {
+        "pid": 16804,
+        "path": "<EXTRACT_DIR>\\OpenPulse\\app\\bin\\openpulse-analyzer.exe",
+        "commandLine": "\"<EXTRACT_DIR>\\OpenPulse\\app\\bin\\openpulse-analyzer.exe\" --protocol 2.0 --path \"<EXTRACT_DIR>\\qa\\慢速 真实项目\" --output \"<EXTRACT_DIR>\\qa\\isolated-window-2\\temp\\openpulse-analyzer-1569694859480553857\\report.json\""
+      }
+    ],
+    "remainingObservedChildren": [],
+    "remainingTempDirectories": [
+      "hsperfdata_29021"
+    ],
+    "observedTcpEndpoints": [],
+    "networkLimitation": "Live OS network; sampling can miss transient traffic; no firewall/adapter changes."
+  },
+  "windowsBuild": "26200.9711 x64 (25H2)",
+  "windowOperations": "Explorer double-click; Chinese folder picker; real v2 scan; evidence/limitations; export/reopen; real cancellation; reanalysis; close during scan",
+  "notes": "Paths normalized from local retained evidence; Explorer double-click used normal user environment; complete operations repeated with isolated child environment. Network adapter/firewall unchanged."
+}

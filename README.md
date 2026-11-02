@@ -59,7 +59,9 @@ Set-Location .\openpulse-platform
 
 `verify` 还运行 Platform 的 MySQL/Testcontainers 集成测试，需要可用的 Docker。优先使用上面的聚合入口，避免引用本机缓存的旧共享库。这些命令无需设置 `MAVEN_BASEDIR`。任务 16 第一阶段的边界、学习入口和验收记录见 [共享客户端阶段记录](docs/tasks/16-stage-1-analyzer-client.md)。
 
-任务 16 第二阶段已实现本地开发窗口：选择项目、后台真实分析、取消/超时/失败恢复、概览和发现证据、扫描限制，以及严格 v2 JSON 导入导出。开发环境构建、启动和演示步骤见 [中文桌面开发指南](docs/desktop-development.zh-CN.md)，验证范围见 [第二阶段验收记录](docs/tasks/16-stage-2-desktop-workflow.md)。第三阶段的运行环境捆绑与 app-image/ZIP 便携分发尚未实施；当前不提供免装 JDK 的桌面包。
+任务 16 第二阶段已通过 PR #36 合并（`f80f917`）：中文窗口、后台真实分析、取消/超时/失败恢复、发现证据和扫描限制，以及严格 v2 JSON 导入导出。第三阶段现提供本地 Windows x64 **候选包** `0.2.2-candidate.1`：完整解压后双击 `OpenPulse.exe`，随包自带 Java/JavaFX 和真实分析器，使用时无需安装 Java、编译工具、数据库或启动服务器。尚未公开发布，分析器 0.2.2 也仍为候选版本。
+
+用户步骤见 [便携包中文说明](docs/windows-x64-desktop.zh-CN.md)；维护者构建入口见 [中文桌面开发指南](docs/desktop-development.zh-CN.md)。阶段验收分别见 [第二阶段](docs/tasks/16-stage-2-desktop-workflow.md) 与 [第三阶段及验证边界](docs/tasks/16-stage-3-windows-portable.md)。候选 ZIP 和 `.sha256` 生成在忽略的 `openpulse-desktop/out/windows-x64/`，不提交分发产物。
 
 ## 工程约定
 
